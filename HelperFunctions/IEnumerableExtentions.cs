@@ -15,5 +15,11 @@ namespace HelperFunctions
 
             return false;
         }
+
+        public static void AddSafely<T,K>(this Dictionary<T,K> dict, T key, K value)
+        {
+            if (!dict.ContainsKey(key))
+                dict.Add(key, value);
+        }
     }
 }

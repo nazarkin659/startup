@@ -23,5 +23,23 @@ namespace HelperFunctions
 
             return false;
         }
+
+        public static string AppendString(this string sourse, string append)
+        {
+            return string.Format("{0}{1}", sourse, append);
+        }
+
+        public static string ToLowerSafely(this string sourse)
+        {
+            return sourse ?? "";
+        }
+
+        public static string ReplaceSafely(this string sourse, string replace, string replaceTo)
+        {
+            if (sourse == null)
+                return "";
+
+            return sourse.Replace(replace, replaceTo);
+        }
     }
 }
