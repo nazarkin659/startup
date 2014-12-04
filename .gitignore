@@ -3,7 +3,6 @@
 ###################
 *.com
 *.class
-*.dll
 *.exe
 *.pdb
 *.dll.config
@@ -69,7 +68,6 @@ packages
 NuGet.exe
 _[Ss]cripts
 *.exe
-*.dll
 *.nupkg
 *.ncrunchsolution
 *.dot[Cc]over
