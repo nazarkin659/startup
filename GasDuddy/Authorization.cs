@@ -11,7 +11,7 @@ using HelperFunctions;
 
 namespace GasDuddy
 {
-    internal class Authorization
+    internal class Authorization : BaseClass
     {
         private HttpCookieCollection cookies;
         private int RetryCount = 0;
@@ -53,7 +53,7 @@ namespace GasDuddy
                     //Send POST request
 
                     HttpResponse response = null;
-                    if (response.StatusCode == 200 && response.RedirectLocation!=null && !response.RedirectLocation.Contains("/error.aspx"))
+                    if (response.StatusCode == 200 && response.RedirectLocation != null && !response.RedirectLocation.Contains("/error.aspx"))
                     {
                         //TO DO: Additional succsessful login varification.
                         cookies = response.Cookies;

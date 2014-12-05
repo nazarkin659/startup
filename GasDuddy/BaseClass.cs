@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace GasDuddy
 {
-    class Program : BaseClass
+    abstract class BaseClass
     {
-        static void Main(string[] args)
-        {
-
-        }
+        internal HttpCookieCollection Cookies { get; set; }
     }
 }
