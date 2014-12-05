@@ -24,22 +24,30 @@ namespace HelperFunctions
             return false;
         }
 
-        public static string AppendString(this string sourse, string append)
+        public static string AppendString(this string source, string append)
         {
-            return string.Format("{0}{1}", sourse, append);
+            return string.Format("{0}{1}", source, append);
         }
 
-        public static string ToLowerSafely(this string sourse)
+        public static string ToLowerSafely(this string source)
         {
-            return sourse ?? "";
+            return source ?? "";
         }
 
-        public static string ReplaceSafely(this string sourse, string replace, string replaceTo)
+        public static string ReplaceSafely(this string source, string replace, string replaceTo)
         {
-            if (sourse == null)
+            if (source == null)
                 return "";
 
-            return sourse.Replace(replace, replaceTo);
+            return source.Replace(replace, replaceTo);
+        }
+
+        public static bool ContainsSafely(this string source, string value)
+        {
+            if (!source.IsNullOrWhiteSpace() && source.Contains(value))
+                return true;
+
+            return false;
         }
     }
 }

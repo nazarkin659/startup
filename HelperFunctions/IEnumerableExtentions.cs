@@ -10,13 +10,13 @@ namespace HelperFunctions
     {
         public static bool IsNullOrEmpty<TSource>(this IEnumerable<TSource> o)
         {
-            if (o == null || o.IsNullOrEmpty())
+            if (o == null || o.Count() == 0)
                 return true;
 
             return false;
         }
 
-        public static void AddSafely<T,K>(this Dictionary<T,K> dict, T key, K value)
+        public static void AddSafely<T, K>(this Dictionary<T, K> dict, T key, K value)
         {
             if (!dict.ContainsKey(key))
                 dict.Add(key, value);

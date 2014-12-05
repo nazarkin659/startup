@@ -8,26 +8,33 @@ using System.Net;
 using System.Threading;
 using System.Web;
 using HelperFunctions;
+using WebSpider;
 
 namespace GasDuddy
 {
     internal class Authorization : BaseClass
     {
-        private HttpCookieCollection cookies;
+        private CookieCollection cookies;
         private int RetryCount = 0;
         private string UserName = "nazarkin659";
         private string Password = "Hakers659";
+        private Spider spider;
 
         public Authorization()
         {
-            cookies = new HttpCookieCollection();
+            cookies = new CookieCollection();
+            spider = new Spider()
+            {
+                PersistCookies = true,
+                Cookies = cookies
+            };
         }
 
         public bool Login()
         {
             if (!string.IsNullOrWhiteSpace(UserName) && !string.IsNullOrWhiteSpace(Password))
             {
-                string url = string.Format("https://secure.gasbuddy.com/login.aspx?site=Illinois");
+                string requestPostUrl = string.Format("https://secure.gasbuddy.com/login.aspx?site=Illinois");
 
                 string postData = string.Empty;
 
@@ -51,9 +58,22 @@ namespace GasDuddy
                         );
 
                     //Send POST request
+                    spider.Url = requestPostUrl;
+                    spider.Type = HTTPRequestType.Post;
+                    spider.PostVars = postData;
 
-                    HttpResponse response = null;
-                    if (response.StatusCode == 200 && response.RedirectLocation != null && !response.RedirectLocation.Contains("/error.aspx"))
+                    spider.SendRequest();
+                    try
+                    {
+
+                    }
+                    catch (WebException e)
+                    {
+                        SiExtentions.AddErrorMessage(e.Message, e.Status.ToString());
+                    }
+
+                    HttpWebResponse response = null;
+                    if (response != null && response.StatusCode == HttpStatusCode.OK)
                     {
                         //TO DO: Additional succsessful login varification.
                         cookies = response.Cookies;
@@ -107,7 +127,7 @@ namespace GasDuddy
                 {
                     Dictionary<string, string> result = new Dictionary<string, string>();
                     result.Add("viewStateGenerator", viewStageGenerator);
-                    result.Add("eventvalidation", eventValidation);
+                    result.Add("eventValidation", eventValidation);
 
                     return result;
                 }

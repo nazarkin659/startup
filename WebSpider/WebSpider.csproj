@@ -107,7 +107,7 @@
   <ItemGroup>
     <Reference Include="Gurock.SmartInspect, Version=3.3.5.124, Culture=neutral, PublicKeyToken=a78b0a9303ab7a7c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\ThirdParties\Gurock.SmartInspect.dll</HintPath>
+      <HintPath>..\ThirdParties\Gurock.SmartInspect.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -125,6 +125,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpiderCacheRecord.cs" />
     <Compile Include="SpiderExtentions.cs" />
+    <Compile Include="SpiderUse.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HelperFunctions\HelperFunctions.csproj">
