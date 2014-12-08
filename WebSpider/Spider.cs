@@ -942,7 +942,7 @@ namespace WebSpider
         {
             set
             {
-                cookies = value == null ? new CookieCollection() : value;//TODO: ask Ilya
+                cookies = value == null ? new CookieCollection() : value;
             }
 
             get

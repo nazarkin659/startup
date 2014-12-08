@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -10,7 +11,22 @@ namespace GasDuddy
 {
     internal class BaseClass : WebSpider.SpiderUse
     {
-        internal HttpCookieCollection Cookies { get; set; }
+        internal CookieCollection Cookies
+        {
+            get
+            {
+                return base.Cookies;
+            }
+            set
+            {
+                base.Cookies = value;
+            }
+        }
+
+        public BaseClass()
+        {
+            Cookies = new CookieCollection();
+        }
 
     }
 }

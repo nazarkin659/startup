@@ -14,27 +14,20 @@ namespace GasDuddy
 {
     internal class Authorization : BaseClass
     {
-        private CookieCollection cookies;
         private int RetryCount = 0;
         private string UserName = "nazarkin659";
         private string Password = "Hakers659";
-        private Spider spider;
 
         public Authorization()
         {
-            cookies = new CookieCollection();
-            spider = new Spider()
-            {
-                PersistCookies = true,
-                Cookies = cookies
-            };
+          
         }
 
         public bool Login()
         {
             if (!string.IsNullOrWhiteSpace(UserName) && !string.IsNullOrWhiteSpace(Password))
             {
-                string requestPostUrl = string.Format("https://secure.gasbuddy.com/login.aspx?site=Illinois");
+                string requestPostUrl = string.Format("https://secure.gasbuddy.com/login.aspx?site=Illinois&returnURL=http://www.illinoisgasprices.com/");
 
                 string postData = string.Empty;
 
@@ -58,11 +51,16 @@ namespace GasDuddy
                         );
 
                     //Send POST request
-                    spider.Url = requestPostUrl;
-                    spider.Type = HTTPRequestType.Post;
-                    spider.PostVars = postData;
 
-                    spider.SendRequest();
+                    string test = GetResponse(requestPostUrl, true, base.Cookies, postData);
+
+                    string t1 = GetResponse("http://www.chicagogasprices.com/", false, base.Cookies);
+
+                    //spider.Url = requestPostUrl;
+                    //spider.Type = HTTPRequestType.Post;
+                    //spider.PostVars = postData;
+
+                    //spider.SendRequest();
                     try
                     {
 
@@ -76,7 +74,7 @@ namespace GasDuddy
                     if (response != null && response.StatusCode == HttpStatusCode.OK)
                     {
                         //TO DO: Additional succsessful login varification.
-                        cookies = response.Cookies;
+                        base.Cookies = response.Cookies;
                         return true;
                     }
                 }
@@ -97,7 +95,7 @@ namespace GasDuddy
             CQ response = null;
             try
             {
-                response = CQ.CreateFromUrl(requestURL);
+                response = GetResponse(requestURL, true);
             }
             catch (HttpException wEx)
             {

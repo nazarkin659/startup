@@ -16,14 +16,6 @@ namespace HelperFunctions
             return false;
         }
 
-        public static bool IsNullOrEmpty(this string str)
-        {
-            if (string.IsNullOrEmpty(str))
-                return true;
-
-            return false;
-        }
-
         public static string AppendString(this string source, string append)
         {
             return string.Format("{0}{1}", source, append);

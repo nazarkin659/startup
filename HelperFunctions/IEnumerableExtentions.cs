@@ -16,6 +16,14 @@ namespace HelperFunctions
             return false;
         }
 
+        public static bool IsNullOrEmpty<TSource>(this ICollection<TSource> o)
+        {
+            if (o == null || o.Count() == 0)
+                return true;
+
+            return false;
+        }
+
         public static void AddSafely<T, K>(this Dictionary<T, K> dict, T key, K value)
         {
             if (!dict.ContainsKey(key))
