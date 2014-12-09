@@ -20,41 +20,41 @@ namespace GasDuddy
 
         public Authorization()
         {
-          
+
         }
 
         public bool Login()
         {
             if (!string.IsNullOrWhiteSpace(UserName) && !string.IsNullOrWhiteSpace(Password))
             {
-                string requestPostUrl = string.Format("https://secure.gasbuddy.com/login.aspx?site=Illinois&returnURL=http://www.illinoisgasprices.com/");
+                string requestUrl = string.Format("https://secure.gasbuddy.com/login.aspx?site=Illinois&returnURL=http%3a%2f%2fwww.chicagogasprices.com%2fmem_log_in.aspx%3fredirect%3dhttp%253a%252f%252fwww.chicagogasprices.com%252f");
 
                 string postData = string.Empty;
 
-                Dictionary<string, string> viewStates = GetViewStates();
-                if (!viewStates.IsNullOrEmpty())
+                //Dictionary<string, string> viewStates = GetViewStates();
+
+                CQ html = GetResponse(requestUrl, true);
+                if (!html.IsNullOrEmpty())
                 {
-                    postData += string.Format(@"__VIEWSTATEGENERATOR={0}&__EVENTVALIDATION={1}ctl00$main$chkSavePwd={2}&
-                        ctl00$main$btnSignIN={3}&ctl00$main$hfRedirectUrl={4}&ctl00$main$txtnetworkid={5}&
-                        ctl00$main$txtAddress={6}&
-                        ctl00$main$txtMember_nm={7}&
-                        ctl00$main$txtPassword={8}",
-                        viewStates["viewStateGenerator"],
-                        viewStates["eventValidation"],
-                        "on",
-                        "Log In",
-                        "",
-                        "",
-                        "",
-                        UserName,
-                        Password
+                    postData += string.Format(@"__EVENTTARGET={0}&__EVENTARGUMENT={1}&__VIEWSTATE={2}&__VIEWSTATEGENERATOR={3}&__EVENTVALIDATION={4}&ctl00$main$hfRedirectUrl={5}&ctl00$main$txtaccesstoken={6}&ctl00$main$txtnetworkid={7}&ctl00$main$txtMember_nm={8}&ctl00$main$txtPassword={9}&ctl00$main$txtAddress={10}&ctl00$main$chkSavePwd={11}&ctl00$main$btnSignIN={12}",
+                        html["[name='__EVENTTARGET']"].Val(),
+                        html["[name='__EVENTARGUMENT']"].Val(),
+                        html["[name='__VIEWSTATE']"].Val(),
+                        html["[name='__VIEWSTATEGENERATOR']"].Val(),
+                        html["[name='__EVENTVALIDATION']"].Val(),
+                        html["[name='ctl00$main$hfRedirectUrl']"].Val(),
+                        html["[name='ctl00$main$txtaccesstoken']"].Val(),
+                        html["[name='ctl00$main$txtnetworkid']"].Val(),
+                        this.UserName,
+                        this.Password,
+                        html["[name='ctl00$main$txtAddress']"].Val(),
+                        html["[name='ctl00$main$chkSavePwd']"].Val(),
+                        html["[name='ctl00$main$btnSignIN']"].Val()
                         );
 
                     //Send POST request
 
-                    string test = GetResponse(requestPostUrl, true, base.Cookies, postData);
-
-                    string t1 = GetResponse("http://www.chicagogasprices.com/", false, base.Cookies);
+                    string responseLogedIn = GetResponse(requestUrl, true, base.Cookies, postData);
 
                     //spider.Url = requestPostUrl;
                     //spider.Type = HTTPRequestType.Post;

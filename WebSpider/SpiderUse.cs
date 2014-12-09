@@ -100,6 +100,7 @@ namespace WebSpider
                             spider.ErrorResponseObject.StatusCode,
                             spider.Url);
 
+                        response = spider.ErrorResponseText;
                         break;
                     }
                     else
