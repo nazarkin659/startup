@@ -12,70 +12,31 @@ namespace WebSpider
 {
     public class SpiderUse
     {
-        public CookieCollection Cookies;
-        private string _reddirectURL;
-        private int _maxReddirectsAllowed = 5;
-        private int _requestCount;
+        public static CookieCollection Cookies;
+        private static readonly object _cookiesLocker = new object();
 
-
-        public SpiderUse()
+        static SpiderUse()
         {
             Cookies = new CookieCollection();
-            _reddirectURL = string.Empty;
-            _requestCount = 0;
+            MaxReddirectsAllowed = 5;
         }
 
-        public int MaxReddirectsAllowed
-        {
-            set { this._maxReddirectsAllowed = value; }
-            get { return this._maxReddirectsAllowed; }
-        }
-        /// <summary>
-        /// Get latest reddirected URL.
-        /// If it's empty the wasn't reddirect.
-        /// </summary>
-        public string ReddirectedURL
-        {
-            private set { this._reddirectURL = value; }
-            get { return _reddirectURL; }
-        }
+
+        public static int MaxReddirectsAllowed { get; set; }
         /// <summary>
         /// Get response from the server.
         /// </summary>
         /// <param name="url"></param>
         /// <param name="trackCookies">Track cookies between requests.</param>
         /// <param name="cookies">Add cookies to request object.</param>
-        /// <param name="postValues"> Add POST values, if so, will use POST method for request.</param>
+        /// <param name="postVars"> Add POST values, if so, will use POST method for request.</param>
         /// <returns>Server Response</returns>
-        public virtual string GetResponse(string url, bool trackCookies, CookieCollection cookies, string postValues)
+        private static string GetResponse(string url, ref Spider spider, bool trackCookies = false)
         {
-            Spider spider = new Spider();
-            spider.Url = url;
+            int requestCount = 0;
+
             spider.FollowRedirect = true;
             spider.headerCookieFix = true;
-
-            if (!postValues.IsNullOrWhiteSpace())
-            {
-                spider.Type = HTTPRequestType.Post;
-                spider.PostVars = postValues;
-            }
-            else
-                spider.Type = HTTPRequestType.Get;
-
-
-            if (trackCookies)
-            {
-                spider.PersistCookies = true;
-                spider.CookieBushnellFix = true;
-                if (cookies == null)
-                    spider.Cookies = new CookieCollection();
-                else
-                    spider.Cookies = cookies;
-            }
-            else if (cookies != null && cookies.Count > 0)
-                spider.Cookies = cookies;
-            else
-                spider.Cookies = new CookieCollection();
 
             string response = string.Empty;
             string reddirectedUrl = string.Empty;
@@ -83,15 +44,11 @@ namespace WebSpider
             {
                 spider.SendRequest();
 
-                while (this._requestCount <= this._maxReddirectsAllowed)
+                while (requestCount <= MaxReddirectsAllowed)
                 {
                     if (ValidResponse(ref spider))
-                    {
-                        response = ReturnResponse(ref spider);
                         break;
-                    }
-
-                    if (isReddirectedOrMoved(ref spider, out reddirectedUrl))
+                    else if (isReddirectedOrMoved(ref spider, out reddirectedUrl))
                     {
                         spider.Url = reddirectedUrl;
                     }
@@ -111,10 +68,10 @@ namespace WebSpider
                     }
 
                     spider.SendRequest();
-                    this._requestCount++;
+                    requestCount++;
                 }
 
-                if (response.IsNullOrWhiteSpace())
+                if (spider.ResponseText.IsNullOrWhiteSpace())
                 {
                     response = spider.ResponseText ?? spider.ErrorResponseText;
                 }
@@ -130,12 +87,63 @@ namespace WebSpider
             return null;
         }
 
+        public static string GetResponse(string url, ref CookieCollection outCookies, bool trackCookies = false, CookieCollection cookies = default(CookieCollection), string postVars = default(string))
+        {
+            Spider spider = new Spider();
+            SetSpider(url, ref spider, trackCookies, cookies, postVars);
+
+            string response = GetResponse(url, ref spider, trackCookies);
+            outCookies = spider.Cookies;
+            return response;
+        }
+
+        public static string GetResponse(string url, bool trackCookies = false, CookieCollection cookies = default(CookieCollection), string postVars = default(string))
+        {
+            Spider spider = new Spider();
+            SetSpider(url, ref spider, trackCookies, cookies, postVars);
+            return GetResponse(url, ref spider, trackCookies);
+        }
+
+        public static string GetResponse(string url, ref Spider spider, bool trackCookies, CookieCollection cookies, string postVars)
+        {
+            spider = new Spider();
+            SetSpider(url, ref spider, trackCookies, cookies, postVars);
+            return GetResponse(url, ref spider, trackCookies);
+        }
+
+        private static void SetSpider(string url, ref Spider spider, bool trackCookies = false, CookieCollection cookies = default(CookieCollection), string postVars = default(string))
+        {
+            spider.Url = url;
+            if (!postVars.IsNullOrWhiteSpace())
+            {
+                spider.Type = HTTPRequestType.Post;
+                spider.PostVars = postVars;
+            }
+            else
+                spider.Type = HTTPRequestType.Get;
+
+
+            if (trackCookies)
+            {
+                spider.PersistCookies = true;
+                spider.CookieBushnellFix = true;
+                if (cookies == null)
+                    spider.Cookies = new CookieCollection();
+                else
+                    spider.Cookies = cookies;
+            }
+            else if (cookies != null && cookies.Count > 0)
+                spider.Cookies = cookies;
+            else
+                spider.Cookies = new CookieCollection();
+        }
+
         /// <summary>
         /// Valid if servers status code is OK and there is no reddirect.
         /// </summary>
         /// <param name="spider">Current instance of spider</param>
         /// <returns></returns>
-        private bool ValidResponse(ref Spider spider)
+        private static bool ValidResponse(ref Spider spider)
         {
             if (spider != null && spider.ResponseObject != null && spider.ResponseObject.StatusCode == HttpStatusCode.OK)
                 return true;
@@ -143,7 +151,7 @@ namespace WebSpider
             return false;
         }
 
-        private bool isReddirectedOrMoved(ref Spider spider, out string reddirectUrl)
+        private static bool isReddirectedOrMoved(ref Spider spider, out string reddirectUrl)
         {
             reddirectUrl = string.Empty;
 
@@ -184,17 +192,20 @@ namespace WebSpider
         /// </summary>
         /// <param name="spider"></param>
         /// <returns></returns>
-        private string ReturnResponse(ref Spider spider)
+        private static string ReturnResponse(ref Spider spider)
         {
             if (spider != null)
             {
-                this.Cookies = spider.Cookies; //TO DO: Filter cookies
+                lock (_cookiesLocker)
+                {
+                    Cookies = spider.Cookies; //TO DO: Filter cookies
+                }
                 return spider.ResponseText;
             }
             return null;
         }
 
-        private string GetReddirectedURL(ref Spider spider)
+        private static string GetReddirectedURL(ref Spider spider)
         {
             if (spider != null)
             {
@@ -210,30 +221,12 @@ namespace WebSpider
                         location = spider.ErrorResponseObject.Headers["Location"];
                 }
 
-                this._reddirectURL = location;
                 return location;
             }
             return null;
         }
 
-        /// <summary>
-        /// 'GET' response.
-        /// </summary>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public virtual string GetResponse(string url)
-        {
-            return this.GetResponse(url, false, null, null);
-        }
 
-        public virtual string GetResponse(string url, bool trackCookies)
-        {
-            return this.GetResponse(url, trackCookies, null, null);
-        }
 
-        public virtual string GetResponse(string url, bool trackCookies, CookieCollection cookies)
-        {
-            return this.GetResponse(url, trackCookies, cookies, null);
-        }
     }
 }

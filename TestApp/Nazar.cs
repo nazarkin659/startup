@@ -11,7 +11,7 @@ using System.Net;
 
 namespace TestApp
 {
-    public class Nazar : SpiderUse
+    public class Nazar 
     {
         public void TestingSpider()
         {
@@ -19,7 +19,7 @@ namespace TestApp
             {
                 string requestURL = "https://secure.gasbuddy.com/login.aspx?site=Illinois";
 
-                string response = GetResponse(requestURL);
+                string response = SpiderUse.GetResponse(requestURL);
             }
             catch (WebException ex)
             {
