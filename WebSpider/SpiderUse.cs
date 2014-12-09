@@ -66,6 +66,7 @@ namespace WebSpider
             if (trackCookies)
             {
                 spider.PersistCookies = true;
+                spider.CookieBushnellFix = true;
                 if (cookies == null)
                     spider.Cookies = new CookieCollection();
                 else
@@ -101,7 +102,7 @@ namespace WebSpider
                             spider.Url);
 
                         response = spider.ErrorResponseText;
-                        break;
+                        return response;
                     }
                     else
                     {
