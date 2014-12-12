@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Runtime.Serialization.Json;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using System.Runtime.Serialization.Json;
+using System.Xml;
 
 namespace HelperFunctions
 {
@@ -17,9 +19,14 @@ namespace HelperFunctions
         /// <param name="obj"></param>
         /// <param name="objType"></param>
         /// <returns></returns>
-        public static string ToJSON(object obj, Type objType)
+        public static string ToJSON(object obj, Type objType, IEnumerable<Type> knownTypes = null)
         {
-            DataContractJsonSerializer serializer = new DataContractJsonSerializer(objType);
+            DataContractJsonSerializer serializer;
+            if (knownTypes.IsNullOrEmpty())
+                serializer = new DataContractJsonSerializer(objType);
+            else
+                serializer = new DataContractJsonSerializer(objType, knownTypes);
+
             MemoryStream ms = new MemoryStream();
             serializer.WriteObject(ms, obj);
             return Encoding.Default.GetString(ms.ToArray());
@@ -32,13 +39,17 @@ namespace HelperFunctions
         /// <param name="jsonString"></param>
         /// <param name="parser"></param>
         /// <returns></returns>
-        public static T FromJSON<T>(string jsonString)
+        public static T FromJSON<T>(string jsonString, IEnumerable<Type> knownTypes = null)
         {
             T obj = Activator.CreateInstance<T>();
 
             MemoryStream ms = new MemoryStream(Encoding.Unicode.GetBytes(jsonString));
 
-            System.Runtime.Serialization.Json.DataContractJsonSerializer serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(obj.GetType());
+            System.Runtime.Serialization.Json.DataContractJsonSerializer serializer;
+            if (knownTypes != null)
+                serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(obj.GetType(), knownTypes);
+            else
+                serializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(obj.GetType());
 
             obj = (T)serializer.ReadObject(ms);
 
@@ -53,38 +64,15 @@ namespace HelperFunctions
         /// </summary>
         /// <param name="json"></param>
         /// <returns></returns>
-        //public static T FromJsonNewtonsoft<T>(string json, IEnumerable<NewtonsoftOptions> newtonsoftOptions = null)
         public static T FromJsonNewtonsoft<T>(string json)
         {
-            //if (newtonsoftOptions.IsNullOrEmpty())
-            //{
-            //    JsonSerializer js = new JsonSerializer();//newtonsoft
-            //    using (JsonTextReader jtr = new JsonTextReader(new StringReader(json)))
-            //    {
-            //        return js.Deserialize<T>(jtr);
-            //    }
-            //}
-            //else
-            //{
+
             JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings();
             jsonSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
             jsonSerializerSettings.MissingMemberHandling = MissingMemberHandling.Ignore;
 
-            //foreach (NewtonsoftOptions option in newtonsoftOptions)
-            //{
-            //    switch (option)
-            //    {
-            //        case NewtonsoftOptions.IgnoreNullValues:
-            //            jsonSerializerSettings.NullValueHandling = NullValueHandling.Ignore;
-            //            break;
-
-            //        default:
-            //            break;
-            //    }
-            //}
 
             return JsonConvert.DeserializeObject<T>(json, jsonSerializerSettings);
-            //}
         }
 
         /// <summary>

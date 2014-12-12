@@ -8,10 +8,12 @@ using WebSpider;
 using GasDuddy;
 using Blablabla;
 using System.Net;
+using Newtonsoft.Json;
+using System.Web;
 
 namespace TestApp
 {
-    public class Nazar 
+    public class Nazar
     {
         public void TestingSpider()
         {
@@ -23,6 +25,24 @@ namespace TestApp
             }
             catch (WebException ex)
             {
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
+        public static void NewtonJson()
+        {
+            try
+            {
+
+                CookieCollection cookies = new CookieCollection() { new Cookie("testname", "testvalue", "somepath", "somedamain") };
+
+                string serialized = JSONHelper.ToJSON(cookies, typeof(CookieCollection));
+                cookies = new CookieCollection();
+
+                cookies = JSONHelper.FromJSON<CookieCollection>(serialized);
+
             }
             catch (Exception e)
             {

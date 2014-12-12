@@ -41,5 +41,31 @@ namespace HelperFunctions
 
             return false;
         }
+
+        public static string CorrectUrl(string baseUri, string url, bool isHttps = false)
+        {
+            if (baseUri.IsNullOrWhiteSpace() || url.IsNullOrWhiteSpace())
+                throw new Exception("Domain and url can't be null");
+
+            string newUrl = url;
+            if (baseUri.EndsWith("/"))
+                baseUri = baseUri.Remove(baseUri.Length - 1, 1);
+
+            if (!newUrl.StartsWith("/"))
+                newUrl = "/" + newUrl;
+
+            //local path
+            if (url.StartsWith(@"\\"))
+            {
+                newUrl = newUrl.Remove(0, 2);
+                string schemaAndDomain = newUrl.ReplaceSafely(newUrl.Split('/')[0], ""); //remove domain
+                newUrl = string.Format("{0}{1}", baseUri, newUrl);
+            }
+
+            if (!newUrl.StartsWith(baseUri))
+                newUrl = baseUri + newUrl;
+
+            return newUrl;
+        }
     }
 }

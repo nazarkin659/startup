@@ -14,9 +14,7 @@ namespace TestApp
     {
         static void Main(string[] args)
         {
-            Nazar testCase = new Nazar();
-
-            testCase.TestingSpider();
+            Nazar.NewtonJson();
         }
     }
 }
