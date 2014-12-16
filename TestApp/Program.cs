@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using HelperFunctions;
 using WebSpider;
-using GasDuddy;
+using GasBuddy;
 using Blablabla;
 
 namespace TestApp

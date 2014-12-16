@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using HelperFunctions;
 using Gurock.SmartInspect;
 
-namespace GasDuddy
+namespace GasBuddy
 {
     public class UserAction : BaseClass
     {

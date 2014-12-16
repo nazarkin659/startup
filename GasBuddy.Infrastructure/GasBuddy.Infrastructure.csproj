@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A7A64121-0F87-4D27-8DAD-BE90E9D877E3}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{8E40FFCA-8AEC-47D6-B07D-1C1F4A965E64}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TestApp</RootNamespace>
-    <AssemblyName>TestApp</AssemblyName>
+    <RootNamespace>GasBuddy.Infrastructure</RootNamespace>
+    <AssemblyName>GasBuddy.Infrastructure</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
@@ -31,15 +31,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>TestApp.Program</StartupObject>
-  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.6.0.6\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="EntityFramework">
+      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\packages\EntityFramework.6.1.1\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -48,35 +48,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Nazar.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Base\BaseDbContext.cs" />
+    <Compile Include="UsersFunc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Blablabla.Tests\Blablabla.Tests.csproj">
-      <Project>{41f99e18-0f1a-4193-85eb-c3cca94c76f2}</Project>
-      <Name>Blablabla.Tests</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Blablabla\Blablabla.csproj">
-      <Project>{4df1305f-388b-4ca5-bee1-4a37ab276050}</Project>
-      <Name>Blablabla</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\GasDuddy\GasBuddy.csproj">
-      <Project>{41165e05-b147-44cb-b055-a739f73f91c9}</Project>
-      <Name>GasBuddy</Name>
+    <ProjectReference Include="..\GasBuddy.Model\GasBuddy.Model.csproj">
+      <Project>{e86c5870-92cc-4f9d-b8b9-4dcb60fa8488}</Project>
+      <Name>GasBuddy.Model</Name>
     </ProjectReference>
     <ProjectReference Include="..\HelperFunctions\HelperFunctions.csproj">
       <Project>{be5fc04c-0534-40a0-92c6-5a80eb90c423}</Project>
       <Name>HelperFunctions</Name>
     </ProjectReference>
-    <ProjectReference Include="..\WebSpider\WebSpider.csproj">
-      <Project>{e782435c-9df5-4043-9ddc-74498fc1b4ea}</Project>
-      <Name>WebSpider</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

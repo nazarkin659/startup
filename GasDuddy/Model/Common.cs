@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using HelperFunctions;
 using System.Web;
 
-namespace GasDuddy.Model
+namespace GasBuddy.Model
 {
     public class Common
     {
@@ -56,15 +56,6 @@ namespace GasDuddy.Model
             }
         }
 
-        public static class ContactInfo
-        {
-            public static string FirstName = "Nazar";
-            public static string LastName = "Petriv";
-            public static string Address = "4049 N Kedvale Ave";
-            public static string Unit = "APT 48";
-            public static string State = "IL";
-            public static string ZipCode = "60641";
-            public static string Email = "nazarkin659@gmail.com";
-        }
+      
     }
 }

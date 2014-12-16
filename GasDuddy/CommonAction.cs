@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HelperFunctions;
-using GasDuddy.Model;
+using GasBuddy.Model;
 using CsQuery;
 using WebSpider;
 using Gurock.SmartInspect;
 using System.Web;
 
-namespace GasDuddy
+namespace GasBuddy
 {
     public class CommonAction
     {

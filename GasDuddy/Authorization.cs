@@ -9,9 +9,9 @@ using System.Threading;
 using System.Web;
 using HelperFunctions;
 using WebSpider;
-using GasDuddy.Model;
+using GasBuddy.Model;
 
-namespace GasDuddy
+namespace GasBuddy
 {
     internal class Authorization : BaseClass
     {

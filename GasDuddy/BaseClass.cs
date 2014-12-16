@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using WebSpider;
-using GasDuddy.Model;
+using GasBuddy.Model;
 
-namespace GasDuddy
+namespace GasBuddy
 {
     public class BaseClass 
     {
