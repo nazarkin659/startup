@@ -205,7 +205,7 @@ namespace WebSpider
             return null;
         }
 
-        private static string GetReddirectedURL(ref Spider spider)
+        public static string GetReddirectedURL(ref Spider spider)
         {
             if (spider != null)
             {

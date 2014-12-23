@@ -10,8 +10,6 @@ namespace GasBuddy
 {
     public class UserAction : BaseClass
     {
-        
-
         public void PlacePrice(List<string> gasStations)
         {
 

@@ -7,54 +7,70 @@ using System.Net;
 using System.Data.Entity;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using CsQuery;
+using HelperFunctions;
+using Gurock.SmartInspect;
+using GasBuddy.Model.ComplexTypes;
 
 namespace GasBuddy.Model
 {
     [Serializable]
     [Table("Users")]
-    public class User
+    public partial class User
     {
         [Key]
         [Required]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int UserID { get; set; }
-        [Column("UserName", TypeName = "char")]
         [MaxLength(24)]
         [Required]
         public string UserName { get; set; }
         [Required]
         public string Password { get; set; }
 
-        public bool isLoggedIn { get; set; }
+        //[NotMapped]
+        //public bool isLoggedIn
+        //{
+        //    get
+        //    {
+        //        //if (!string.IsNullOrWhiteSpace(Mobile.CookiesHolder) && !string.IsNullOrWhiteSpace(CheckLoginURL))
+        //        //{
+        //        //    try
+        //        //    {
+        //        //        CQ response = WebSpider.SpiderUse.GetResponse(CheckLoginURL, false, Cookies);
+        //        //        if (!response.IsNullOrEmpty() &&
+        //        //            (!response[string.Format(".login .profile:contains('{0}')", UserName.TrimEnd())].IsNullOrEmpty() || !response[string.Format("#ctl00_TB_lblLogInStatus .MPLink:contains('{0}')", UserName.TrimEnd())].IsNullOrEmpty())
+        //        //            )
+        //        //        {
+        //        //            return true;
+        //        //        }
+        //        //    }
+        //        //    catch (Exception e)
+        //        //    {
+        //        //        SiAuto.Main.LogException(e);
+        //        //    }
+        //        //}
+        //        return false;
+        //    }
+        //}
 
-        public string CookiesHolder { get; set; }
+        //public string CookiesHolder { get; set; }
 
-        [NotMapped]
-        public CookieCollection Cookies
-        {
-            get
-            {
-                if (!string.IsNullOrWhiteSpace(CookiesHolder))
-                    return HelperFunctions.JSONHelper.FromJSON<CookieCollection>(CookiesHolder, new List<Type> { typeof(System.Net.Cookie) });
-                else
-                    return null;
-            }
-            set
-            {
-                if (value != null)
-                    this.CookiesHolder = HelperFunctions.JSONHelper.ToJSON(value, typeof(CookieCollection), new List<Type> { typeof(System.Net.Cookie) });
-                else
-                    this.CookiesHolder = null;
-            }
-        }
 
-        [NonSerialized]
-        [NotMapped]
-        public string Response;
+
+
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? LastModifiedDate { get; set; }
+
+        public Mobile Mobile { get; set; }
+
+        public WebSite WebSite { get; set; }
 
         public User()
         {
-            this.Response = string.Empty;
-            this.CookiesHolder = string.Empty;
+            //this.CookiesHolder = string.Empty;
+            Mobile = new Mobile(this.UserName);
+            WebSite = new WebSite();
         }
     }
 }

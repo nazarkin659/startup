@@ -9,6 +9,7 @@ using CsQuery;
 using WebSpider;
 using Gurock.SmartInspect;
 using System.Web;
+using GasBuddy.Model.ComplexTypes;
 
 namespace GasBuddy
 {
@@ -19,7 +20,7 @@ namespace GasBuddy
         /// </summary>
         /// <param name="zipCode">Area zip code to search.</param>
         /// <returns></returns>
-        public List<string> GetStations(string zipCode)
+        public static List<string> GetStations(string zipCode)
         {
             if (!zipCode.IsNullOrWhiteSpace())
             {
@@ -41,11 +42,17 @@ namespace GasBuddy
             return null;
         }
 
-        public bool SuccessReportPrice(string stationUrl, User user)
+        /// <summary>
+        /// Report prices on mobile website
+        /// </summary>
+        /// <param name="stationUrl"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public static bool SuccessReportPriceMobile(string stationUrl, User user)
         {
             if (!stationUrl.IsNullOrWhiteSpace() && user != null)
             {
-                CQ html = SpiderUse.GetResponse(stationUrl, true, user.Cookies);
+                CQ html = SpiderUse.GetResponse(stationUrl, true, user.Mobile.Cookies);
                 Model.Common.Price price = GetPrevPrices(ref html);
                 if (!html.IsNullOrEmpty() && price.IsValid())
                 {
@@ -75,14 +82,14 @@ namespace GasBuddy
                                 );
 
                             Spider spider = null;
-                            CQ response = SpiderUse.GetResponse(reportPriceUrl, ref spider, true, user.Cookies, postData);
-                            if (!response.IsNullOrEmpty())
+                            CQ response = SpiderUse.GetResponse(reportPriceUrl, ref spider, false, user.Mobile.Cookies, postData);
+                            if (!response.IsNullOrEmpty() && isReported(ref response, ref user))
                             {
-
+                                return true;
                             }
                             else
                             {
-
+                                //TO DO: Logs 
                             }
                         }
                     }
@@ -91,7 +98,7 @@ namespace GasBuddy
             return false;
         }
 
-        private string BuildReportPriceUrl(string stationUrl)
+        private static string BuildReportPriceUrl(string stationUrl)
         {
             if (!stationUrl.IsNullOrWhiteSpace())
             {
@@ -109,7 +116,7 @@ namespace GasBuddy
             return null;
         }
 
-        private Model.Common.Price GetPrevPrices(ref CQ page)
+        private static Model.Common.Price GetPrevPrices(ref CQ page)
         {
             if (!page.IsNullOrEmpty())
             {
@@ -124,6 +131,17 @@ namespace GasBuddy
                 return price;
             }
             return null;
+        }
+
+        private static bool isReported(ref CQ html, ref User user)
+        {
+            if (!html.IsNullOrEmpty()
+                && !html[string.Format("a>:contains('{0}')", user.UserName)].IsNullOrEmpty()
+                )
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

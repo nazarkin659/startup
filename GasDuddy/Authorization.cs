@@ -34,7 +34,7 @@ namespace GasBuddy
                 "ctl00$content$hfRedirect"
             };
 
-            if (Login(ref user, loginUrl, postKeys))
+            if (Login(ref user, loginUrl, postKeys, user.Mobile))
                 return true;
 
             return false;
@@ -60,13 +60,13 @@ namespace GasBuddy
                 "ctl00$main$btnSignIN"
             };
 
-            if (Login(ref user, loginUrl, postKeys))
+            if (Login(ref user, loginUrl, postKeys, user.Mobile))
                 return true;
 
             return false;
         }
 
-        private static bool Login(ref User user, string logInUrl, List<string> postKeys)
+        private static bool Login(ref User user, string logInUrl, List<string> postKeys, GasBuddy.Model.ComplexTypes.LoginType loginType)
         {
             if (user != null || !user.Password.IsNullOrWhiteSpace() || !user.UserName.IsNullOrWhiteSpace())
             {
@@ -107,14 +107,13 @@ namespace GasBuddy
 
                         Spider spider = null;
                         string responseLogedIn = SpiderUse.GetResponse(requestUrl, ref spider, true, userCookies, postData);
+                        loginType.CheckLoginURL = spider.ResponseObject.ResponseUri.ToString();
+                        loginType.Cookies = SpiderUse.Cookies;
+
                         CQ responseCQ = responseLogedIn;
-                        if (spider.ResponseObject != null && spider.ResponseObject.StatusCode == HttpStatusCode.OK &&
-                            (!responseCQ[string.Format(".login .profile:contains('{0}')", user.UserName)].IsNullOrEmpty() || !responseCQ[string.Format("#ctl00_TB_panMember .MPLink:contains('{0}')", user.UserName)].IsNullOrEmpty())
-                            )
+                        if (spider.ResponseObject != null && spider.ResponseObject.StatusCode == HttpStatusCode.OK && loginType.isLoggedIn)
                         {
-                            user.isLoggedIn = true;
-                            user.Cookies = SpiderUse.Cookies;
-                            user.Response = responseLogedIn;
+                            loginType.Response = responseLogedIn;
                             return true;
                         }
                     }
