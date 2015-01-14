@@ -8,7 +8,6 @@ namespace GasBuddy.Infrastructure.Base
     using System.Data.Entity.Core.Objects;
     using System.Collections.Generic;
     using System.Data.Entity.Infrastructure;
-    using GasBuddy.Model.ComplexTypes;
 
     public partial class Db : DbContext
     {
@@ -19,44 +18,11 @@ namespace GasBuddy.Infrastructure.Base
 
         public virtual DbSet<ContactInfo> ContactInfoes { get; set; }
         public virtual DbSet<User> Users { get; set; }
-
         public virtual DbSet<UsersContactInfo> UsersContactInfo { get; set; }
-
+        public virtual DbSet<Mobile> Mobile { get; set; }
+        public virtual DbSet<WebSite> WebSite { get; set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<ContactInfo>()
-                .Property(e => e.FirstName)
-                .IsUnicode(false);
-
-            modelBuilder.Entity<ContactInfo>()
-                .Property(e => e.LastName)
-                .IsUnicode(false);
-
-            modelBuilder.Entity<ContactInfo>()
-                .Property(e => e.Address)
-                .IsUnicode(false);
-
-            modelBuilder.Entity<ContactInfo>()
-                .Property(e => e.Unit)
-                .IsFixedLength();
-
-            modelBuilder.Entity<ContactInfo>()
-                .Property(e => e.State)
-                .IsFixedLength();
-
-            modelBuilder.Entity<ContactInfo>()
-                .Property(e => e.Email)
-                .IsUnicode(false);
-
-            modelBuilder.Entity<User>()
-                .Property(e => e.UserID)
-                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity)
-                ;
-
-            modelBuilder.ComplexType<GasBuddy.Model.ComplexTypes.Mobile>();
-
-            modelBuilder.Entity<Mobile>()
-                .Map(m => m.ToTable("Mobile"));
         }
 
 

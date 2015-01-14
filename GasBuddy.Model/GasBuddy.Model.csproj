@@ -59,10 +59,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ContactInfo.cs" />
-    <Compile Include="ComplexTypes\LoginType.cs" />
+    <Compile Include="Mobile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="User.cs" />
     <Compile Include="UsersContactInfo.cs" />
+    <Compile Include="WebSite.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HelperFunctions\HelperFunctions.csproj">

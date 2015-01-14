@@ -9,7 +9,6 @@ using CsQuery;
 using WebSpider;
 using Gurock.SmartInspect;
 using System.Web;
-using GasBuddy.Model.ComplexTypes;
 
 namespace GasBuddy
 {
@@ -98,6 +97,34 @@ namespace GasBuddy
             return false;
         }
 
+        public static int? GetTodaysPoints(ref User user)
+        {
+            if (user != null && user.Website != null && !string.IsNullOrWhiteSpace(user.Website.URL))
+            {
+                if (!user.Website.isLoggedIn && (!Authorization.LoginWebsite(ref user)))
+                {
+                    //TODO: Logs here
+                }
+                else
+                {
+                    CQ html = SpiderUse.GetResponse(user.Website.URL, false, user.Website.Cookies);
+                    if (!html.IsNullOrEmpty())
+                    {
+                        string tdPoints = html["th:contains('s Points')+td"].Text().Trim();
+
+                        if (!string.IsNullOrWhiteSpace(tdPoints))
+                        {
+                            decimal todayPoints;
+                            if (decimal.TryParse(tdPoints.Trim(), out todayPoints))
+                                return Convert.ToInt32(todayPoints);
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
         private static string BuildReportPriceUrl(string stationUrl)
         {
             if (!stationUrl.IsNullOrWhiteSpace())
@@ -135,12 +162,15 @@ namespace GasBuddy
 
         private static bool isReported(ref CQ html, ref User user)
         {
-            if (!html.IsNullOrEmpty()
-                && !html[string.Format("a>:contains('{0}')", user.UserName)].IsNullOrEmpty()
-                )
+            //if (!html.IsNullOrEmpty()
+            //    && html[string.Format("a>:contains('{0}')", user.UserName)].IsNullOrEmpty()
+            //    )
+            int? todayPoints = GetTodaysPoints(ref user);
+            if (todayPoints != null && todayPoints > 0)
             {
                 return true;
             }
+
             return false;
         }
     }

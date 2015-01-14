@@ -10,6 +10,7 @@ using System.Web;
 using HelperFunctions;
 using WebSpider;
 using GasBuddy.Model;
+using GasBuddy.Infrastructure;
 
 namespace GasBuddy
 {
@@ -35,7 +36,10 @@ namespace GasBuddy
             };
 
             if (Login(ref user, loginUrl, postKeys, user.Mobile))
+            {
+                UsersFunc.UpdateUser(user);
                 return true;
+            }
 
             return false;
         }
@@ -60,13 +64,16 @@ namespace GasBuddy
                 "ctl00$main$btnSignIN"
             };
 
-            if (Login(ref user, loginUrl, postKeys, user.Mobile))
+            if (Login(ref user, loginUrl, postKeys, user.Website))
+            {
+                UsersFunc.UpdateUser(user);
                 return true;
+            }
 
             return false;
         }
 
-        private static bool Login(ref User user, string logInUrl, List<string> postKeys, GasBuddy.Model.ComplexTypes.LoginType loginType)
+        private static bool Login(ref User user, string logInUrl, List<string> postKeys, dynamic loginType)
         {
             if (user != null || !user.Password.IsNullOrWhiteSpace() || !user.UserName.IsNullOrWhiteSpace())
             {

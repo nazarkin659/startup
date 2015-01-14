@@ -8,6 +8,7 @@ using HelperFunctions;
 using System.Net;
 using GasBuddy.Model;
 using GasBuddy.Infrastructure;
+using GasBuddy.Infrastructure.Base;
 
 namespace GasBuddy
 {
@@ -15,13 +16,60 @@ namespace GasBuddy
     {
         static void Main(string[] args)
         {
+            //SiAuto.Si.Connections = "file(filename=\"log.txtxt\", level=\"error\")";
+            //SiAuto.Si.Enabled = true;
+            //SiAuto.Main.LogError("test error");
+
+
+            try
+            {
+                //List<User> users = UsersFunc.GetUsers();
+                //foreach (var u in users)
+                //{
+                //    try
+                //    {
+                //        User user = u;
+                //        Authorization.LoginMobile(ref user);
+                //        Authorization.LoginWebsite(ref user);
+
+
+                //    }
+                //    catch (Exception e)
+                //    { 
+
+                //    }
+                //}
+
+
+                //User nazarkin659 = UsersFunc.GetUser("nazarkin659");
+                //Authorization.LoginWebsite(ref nazarkin659);
+                //UsersFunc.UpdateUser(nazarkin659);
+            }
+            catch (Exception e)
+            {
+
+            }
+
+
+
+
+
+
             ReportPrices();
+            //User nazarkin659 = UsersFunc.GetUser("gasbuddy659");
+
+            //Authorization.LoginMobile(ref nazarkin659);
+            //UsersFunc.UpdateUser(nazarkin659);
+
+
+
+
             try
             {
                 User user = UsersFunc.GetUsers(1).FirstOrDefault();
                 if (user != null)
                 {
-                    
+
                 }
             }
             catch (Exception e)
@@ -33,18 +81,30 @@ namespace GasBuddy
             try
             {
                 List<User> usersToProcess = UsersFunc.GetUsers();
+
                 if (!usersToProcess.IsNullOrEmpty())
                 {
                     List<string> stations = CommonAction.GetStations("60641");
-                    foreach (string station in stations)
+
+                    foreach (User user in usersToProcess)
                     {
-                        foreach (User user in usersToProcess)
+                        foreach (string station in stations)
                         {
                             try
                             {
                                 if (user != null)
                                 {
-                                    CommonAction.SuccessReportPriceMobile(station, user);
+                                    if (CommonAction.SuccessReportPriceMobile(station, user))
+                                    {
+
+
+
+
+                                    }
+                                    else
+                                    {
+                                        //TODO: Logs ???
+                                    }
                                 }
                             }
                             catch (Exception e)
@@ -60,6 +120,5 @@ namespace GasBuddy
                 SiAuto.Main.LogException(e);
             }
         }
-
     }
 }

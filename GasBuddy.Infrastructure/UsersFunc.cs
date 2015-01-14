@@ -15,22 +15,15 @@ namespace GasBuddy.Infrastructure
 
         public static bool AddUser(List<User> users)
         {
-            try
+            if (!users.IsNullOrEmpty())
             {
-                if (!users.IsNullOrEmpty())
+                using (var db = new GasBuddy.Infrastructure.Base.Db())
                 {
-                    using (var db = new GasBuddy.Infrastructure.Base.Db())
-                    {
-                        db.Users.AddRange(users);
-                        db.SaveChanges();
-                    }
-
-                    return true;
+                    db.Users.AddRange(users);
+                    db.SaveChanges();
                 }
-            }
-            catch (Exception e)
-            {
-                //SiAuto.Main.LogException(e);
+
+                return true;
             }
             return false;
         }
@@ -42,27 +35,25 @@ namespace GasBuddy.Infrastructure
 
         public static bool UpdateUser(List<User> users)
         {
-            try
+            if (!users.IsNullOrEmpty())
             {
-                if (!users.IsNullOrEmpty())
+                using (var db = new GasBuddy.Infrastructure.Base.Db())
                 {
-                    using (var db = new GasBuddy.Infrastructure.Base.Db())
+                    foreach (User user in users)
                     {
-                        foreach (User user in users)
-                        {
-                            db.Users.Attach(user);
-                            db.Entry(user).State = System.Data.Entity.EntityState.Modified;
-                        }
+                       
+                            user.Mobile.User = null;
+                            user.Website.User = null;
 
-                        db.SaveChanges();
+                            db.Users.Attach(user);
+                            db.Entry<Mobile>(user.Mobile).State = EntityState.Modified;
+                            db.Entry<WebSite>(user.Website).State = EntityState.Modified;
+                            db.Entry(user).State = System.Data.Entity.EntityState.Modified;
                     }
 
-                    return true;
+                    db.SaveChanges();
                 }
-            }
-            catch (Exception e)
-            {
-                //SiAuto.Main.LogException(e);
+                return true;
             }
             return false;
         }
@@ -73,14 +64,36 @@ namespace GasBuddy.Infrastructure
 
         public static List<User> GetUsers(int count = 50)
         {
-            List<User> users = null;
-
+            List<User> users = new List<User>();
             using (var db = new Db())
             {
-                users = db.Users.Take(count).ToList();
-            }
+                foreach (User u in db.Users.Take(count))
+                {
+                    User newU = new User();
+                    newU.UserID = u.UserID;
+                    newU.UserName = u.UserName;
+                    newU.Website = u.Website;
+                    newU.Password = u.Password;
+                    newU.Mobile = u.Mobile;
+                    newU.LastModifiedDate = u.LastModifiedDate;
+                    newU.CreatedDate = u.CreatedDate;
+                    newU.MaxTodayPoints = u.MaxTodayPoints;
 
-            return users;
+                    users.Add(newU);
+                }
+
+                return users;
+            }
+        }
+
+        public static User GetUser(string userName)
+        {
+            User user = null;
+            using (var db = new Db())
+            {
+                user = db.Users.Where(u => string.Equals(u.UserName, userName)).Include("Mobile").Include("WebSite").FirstOrDefault();
+            }
+            return user;
         }
     }
 }
