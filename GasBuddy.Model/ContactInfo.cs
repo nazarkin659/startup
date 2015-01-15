@@ -36,5 +36,9 @@
         [Required]
         [StringLength(50)]
         public string Email { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string City { get; set; }
     }
 }

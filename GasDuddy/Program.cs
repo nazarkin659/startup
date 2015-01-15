@@ -16,13 +16,19 @@ namespace GasBuddy
     {
         static void Main(string[] args)
         {
-            //SiAuto.Si.Connections = "file(filename=\"log.txtxt\", level=\"error\")";
+            //SiAuto.Si.Connections = "file(filename=\"c:\\log.txtxt\", level=\"error\")";
             //SiAuto.Si.Enabled = true;
             //SiAuto.Main.LogError("test error");
 
 
             try
             {
+
+                User user = UsersFunc.GetUser("gasbuddy659");
+                ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(user.UserID);
+                CommonAction.CheckAuthorization(ref user);
+                CommonAction.ReportPrizeEntries(ref user, ref userContactInfo);
+                UsersFunc.UpdateUser(user);
                 //List<User> users = UsersFunc.GetUsers();
                 //foreach (var u in users)
                 //{
@@ -54,7 +60,6 @@ namespace GasBuddy
 
 
 
-
             ReportPrices();
             //User nazarkin659 = UsersFunc.GetUser("gasbuddy659");
 
@@ -66,11 +71,11 @@ namespace GasBuddy
 
             try
             {
-                User user = UsersFunc.GetUsers(1).FirstOrDefault();
-                if (user != null)
-                {
+                //User user = UsersFunc.GetUsers(1).FirstOrDefault();
+                //if (user != null)
+                //{
 
-                }
+                //}
             }
             catch (Exception e)
             { }
@@ -88,6 +93,26 @@ namespace GasBuddy
 
                     foreach (User user in usersToProcess)
                     {
+                        User innerUser = user;
+                        if (!innerUser.Mobile.isLoggedIn)
+                        {
+                            if (!Authorization.LoginMobile(ref innerUser))
+                            {
+                                SiAuto.Main.LogError("Can't Log In Mobile, User = {0}", user.UserName);
+                                break;
+                                //TODO: Improve
+                            }
+                        }
+                        if (!innerUser.Website.isLoggedIn)
+                        {
+                            if (!Authorization.LoginWebsite(ref innerUser))
+                            {
+                                SiAuto.Main.LogError("Can't Log In WebSite, User = {0}", user.UserName);
+                                break;
+                                //TODO: Improve
+                            }
+                        }
+
                         foreach (string station in stations)
                         {
                             try
@@ -96,10 +121,8 @@ namespace GasBuddy
                                 {
                                     if (CommonAction.SuccessReportPriceMobile(station, user))
                                     {
-
-
-
-
+                                        if (CommonAction.isReachedTodayMaxPoints(user))
+                                            break; //this user is done
                                     }
                                     else
                                     {
@@ -120,5 +143,6 @@ namespace GasBuddy
                 SiAuto.Main.LogException(e);
             }
         }
+
     }
 }

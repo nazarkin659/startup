@@ -29,7 +29,10 @@ namespace GasBuddy.Model
         public string Password { get; set; }
         public DateTime? CreatedDate { get; set; }
         public DateTime? LastModifiedDate { get; set; }
-        public int MaxTodayPoints { get; set; }
+        public int TodayPointsReceived { get; set; }
+        public int? PrizeEntriesReported { get; set; }
+
+        public int PrizesToReport { get; set; }
 
         public virtual Mobile Mobile { get; set; }
         public virtual WebSite Website { get; set; }

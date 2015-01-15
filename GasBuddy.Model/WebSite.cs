@@ -3,19 +3,20 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using HelperFunctions;
-using System.Net;
 
 namespace GasBuddy.Model
 {
-    [Table("Mobile")]
-    public partial class Mobile
+    [Table("WebSite")]
+    public partial class WebSite
     {
         [Required]
-        [Key, ForeignKey("User")]
-        public int MobileID { get; set; }
+        [Key]
+        [ForeignKey("User")]
+        public int WebID { get; set; }
 
         public virtual User User { get; set; }
 
@@ -44,6 +45,12 @@ namespace GasBuddy.Model
                 return false;
             }
         }
+        public string CookiesHolder { get; set; }
+        public string CheckLoginURL { get; set; }
+
+        public string URL { get; set; }
+
+        public string Response { get; set; }
 
         [NotMapped]
         public CookieCollection Cookies
@@ -63,12 +70,5 @@ namespace GasBuddy.Model
                     this.CookiesHolder = null;
             }
         }
-
-        public string CheckLoginURL { get; set; }
-        public string CookiesHolder { get; set; }
-
-        public string Response { get; set; }
-
-        public Mobile() { }
     }
 }

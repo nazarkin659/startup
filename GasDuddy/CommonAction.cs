@@ -125,6 +125,183 @@ namespace GasBuddy
             return null;
         }
 
+        public static bool isReachedTodayMaxPoints(User user)
+        {
+            if (user != null && user.Website != null)
+            {
+                int? todayPoints = CommonAction.GetTodaysPoints(ref user);
+                if (todayPoints != null && todayPoints == user.TodayPointsReceived)
+                    return true;
+                else
+                {
+                    SiAuto.Main.LogMessage("{0} Today's Points == {1}, continue...", todayPoints);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Place Prize Entries. 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns>Updated User Object</returns>
+        public static bool ReportPrizeEntries(ref User user, ref ContactInfo userContacInto)
+        {
+            if (user != null && userContacInto != null)
+            {
+                string prizeReportURL = "https://m.gasbuddy.com/Prize.aspx";
+                CQ html = SpiderUse.GetResponse(prizeReportURL, false, user.Mobile.Cookies);
+                if (!html.IsNullOrEmpty())
+                {
+                    int? prizes = GetAvailablePrizes(ref html);
+                    if (prizes == null)
+                        SiAuto.Main.LogError("Can't get available prizes to report. User {0}", user.UserName);
+                    else if (prizes == 0)
+                    {
+                        SiAuto.Main.LogMessage("No Available Prizes, User {0}", user.UserName);
+                    }
+                    else
+                    {
+                        int prizesToReport = 0;
+
+                        #region Set Prizes To Report
+                        switch (user.PrizesToReport)
+                        {
+                            case 0: //do not report prizes
+                                return true;
+
+                            case -1: //report all prizes available
+                                prizesToReport = (int)prizes;
+                                break;
+
+                            default:
+                                prizesToReport = user.PrizesToReport;
+                                break;
+                        }
+                        #endregion Set Prizes To Report
+
+                        Common.ASPStats stats = new Common.ASPStats(html);
+                        if (stats != null)
+                        {
+                            string postData = string.Format("__EVENTVALIDATION={0}&__VIEWSTATE={1}&__VIEWSTATEGENERATOR={2}&ctl00$content$txtTickets={3}&ctl00$content$btnGetTickets={4}",
+                                    stats.EventValidation,
+                                    stats.ViewState,
+                                    stats.ViewStateGenerator,
+                                    HttpUtility.UrlEncode(prizesToReport.ToString()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$btnGetTickets']"].Val())
+                                );
+
+                            Spider spider = null;
+                            CQ prizesContactInfoResponse = SpiderUse.GetResponse(prizeReportURL, ref spider, true, user.Mobile.Cookies, postData);
+                            string contactInfoUrl = SpiderUse.GetResponseURL(ref spider);
+                            if (!prizesContactInfoResponse.IsNullOrEmpty() &&
+                                !string.IsNullOrWhiteSpace(contactInfoUrl) &&
+                                !prizesContactInfoResponse[string.Format(":contains('You have entered {0} ticket for this prize draw')", prizesToReport.ToString())].IsNullOrEmpty())
+                            {
+                                stats = new Common.ASPStats(prizesContactInfoResponse);
+                                if (stats != null)
+                                {
+                                    string contactInfoPagePostData = string.Format("__VIEWSTATE={0}&__VIEWSTATEGENERATOR={1}&__EVENTVALIDATION={2}&ctl00$content$fvContactInfo$hfTickets={3}&ctl00$content$fvContactInfo$txtFirstName={4}&ctl00$content$fvContactInfo$txtLastName={5}&ctl00$content$fvContactInfo$txtAddress={6}&ctl00$content$fvContactInfo$txtAddress2={7}&ctl00$content$fvContactInfo$txtCity={8}&ctl00$content$fvContactInfo$ddlState={9}&ctl00$content$fvContactInfo$txtZipCode={10}&ctl00$content$fvContactInfo$txtEmail={11}&ctl00$content$fvContactInfo$txtSubmit={12}",
+                                        HttpUtility.HtmlDecode(stats.ViewState),
+                                        HttpUtility.HtmlDecode(stats.ViewStateGenerator),
+                                        HttpUtility.HtmlDecode(stats.EventValidation),
+                                        HttpUtility.HtmlDecode(prizesToReport.ToString()),
+                                        HttpUtility.HtmlDecode(userContacInto.FirstName),
+                                        HttpUtility.HtmlDecode(userContacInto.LastName),
+                                        HttpUtility.HtmlDecode(userContacInto.Address),
+                                        HttpUtility.HtmlDecode(userContacInto.Unit),
+                                        HttpUtility.HtmlDecode(userContacInto.City),
+                                        HttpUtility.HtmlDecode(userContacInto.State),
+                                        HttpUtility.HtmlDecode(userContacInto.ZipCode.ToString()),
+                                        HttpUtility.HtmlDecode(userContacInto.Email),
+                                        HttpUtility.HtmlDecode(prizesContactInfoResponse["[name='ctl00$content$fvContactInfo$txtSubmit']"].Val())
+                                        );
+
+                                    CQ finalResponse = SpiderUse.GetResponse(contactInfoUrl, false, user.Mobile.Cookies, contactInfoPagePostData);
+                                    if (finalResponse.IsNullOrEmpty() || !ValidatePrizeReport(ref user, ref finalResponse, prizes, prizesToReport))
+                                        SiAuto.Main.LogError("Report Failed: User {0}", user.UserName);
+                                    else
+                                    {
+                                        SiAuto.Main.LogMessage("Reported Succsessfully, User {0}", user.UserName);
+                                        int? entriesReported = GetPrizeEntriesReported(ref finalResponse);
+                                        if (entriesReported == null)
+                                        {
+                                            SiAuto.Main.LogError("Entries Reported  == null, User {0}", user.UserName);
+                                        }
+                                        else if (entriesReported == 0)
+                                        {
+                                            SiAuto.Main.LogError("Should not happen. Entries Reported == 0. User {0}", user.UserName);
+                                        }
+                                        else
+                                        {
+                                            user.PrizeEntriesReported = entriesReported;
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                SiAuto.Main.LogError("Can't report prizes, User {0}", user.UserName);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ValidatePrizeReport(ref User user, ref CQ prizeReportHtml, int? oldPrizesValue, int? prizesToReport)
+        {
+            if (user != null && !prizeReportHtml.IsNullOrEmpty() && oldPrizesValue != null && prizesToReport != null)
+            {
+                int? prizesAvailable = GetAvailablePrizes(ref prizeReportHtml);
+                if (prizesAvailable != null && (prizesAvailable == oldPrizesValue - prizesToReport))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Get max available prizes to report.
+        /// </summary>
+        /// <param name="prizesHtml">https://m.gasbuddy.com/Prize.aspx</param>
+        /// <returns></returns>
+        public static int? GetAvailablePrizes(ref CQ prizesHtml)
+        {
+            if (!prizesHtml.IsNullOrEmpty())
+            {
+                string text = prizesHtml[":contains('You can get up to'):last"].Text();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    string ticketsText = text.Substring("up to", "tickets");
+                    if (!string.IsNullOrWhiteSpace(ticketsText))
+                    {
+                        int tickets;
+                        if (int.TryParse(ticketsText.Trim(), out tickets))
+                            return tickets;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public static void CheckAuthorization(ref User user)
+        {
+            if (user != null && user.Mobile != null && user.Website != null)
+            {
+                if (!user.Mobile.isLoggedIn)
+                    Authorization.LoginMobile(ref user);
+
+                if (!user.Website.isLoggedIn)
+                    Authorization.LoginWebsite(ref user);
+            }
+        }
+
         private static string BuildReportPriceUrl(string stationUrl)
         {
             if (!stationUrl.IsNullOrWhiteSpace())
@@ -172,6 +349,25 @@ namespace GasBuddy
             }
 
             return false;
+        }
+
+        private static int? GetPrizeEntriesReported(ref CQ prizeEntriesHtml)
+        {
+            if (!prizeEntriesHtml.IsNullOrEmpty())
+            {
+                string text = prizeEntriesHtml[":contains('for this prize draw.  Good luck!'):last"].Text();
+                if (!string.IsNullOrWhiteSpace(text))
+                {
+                    string entriesText = text.Substring("have", "entr");
+                    if (!string.IsNullOrWhiteSpace(entriesText))
+                    {
+                        int entries;
+                        if (int.TryParse(entriesText.Trim(), out entries))
+                            return entries;
+                    }
+                }
+            }
+            return null;
         }
     }
 }

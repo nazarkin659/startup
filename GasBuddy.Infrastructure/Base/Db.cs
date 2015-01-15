@@ -16,7 +16,7 @@ namespace GasBuddy.Infrastructure.Base
         {
         }
 
-        public virtual DbSet<ContactInfo> ContactInfoes { get; set; }
+        public virtual DbSet<ContactInfo> ContactInfo { get; set; }
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<UsersContactInfo> UsersContactInfo { get; set; }
         public virtual DbSet<Mobile> Mobile { get; set; }

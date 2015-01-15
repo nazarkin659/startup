@@ -226,6 +226,17 @@ namespace WebSpider
             return null;
         }
 
+        public static string GetResponseURL(ref Spider spider)
+        {
+            if (spider != null)
+            {
+                string location = string.Empty;
+                if (spider.ResponseObject != null && spider.ResponseObject.ResponseUri != null)
+                    return location = spider.ResponseObject.ResponseUri.ToString();
+            }
+            return null;
+        }
+
 
 
     }

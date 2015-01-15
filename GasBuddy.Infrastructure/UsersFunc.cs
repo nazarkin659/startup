@@ -41,14 +41,14 @@ namespace GasBuddy.Infrastructure
                 {
                     foreach (User user in users)
                     {
-                       
-                            user.Mobile.User = null;
-                            user.Website.User = null;
 
-                            db.Users.Attach(user);
-                            db.Entry<Mobile>(user.Mobile).State = EntityState.Modified;
-                            db.Entry<WebSite>(user.Website).State = EntityState.Modified;
-                            db.Entry(user).State = System.Data.Entity.EntityState.Modified;
+                        user.Mobile.User = null;
+                        user.Website.User = null;
+
+                        db.Users.Attach(user);
+                        db.Entry<Mobile>(user.Mobile).State = EntityState.Modified;
+                        db.Entry<WebSite>(user.Website).State = EntityState.Modified;
+                        db.Entry(user).State = System.Data.Entity.EntityState.Modified;
                     }
 
                     db.SaveChanges();
@@ -77,7 +77,9 @@ namespace GasBuddy.Infrastructure
                     newU.Mobile = u.Mobile;
                     newU.LastModifiedDate = u.LastModifiedDate;
                     newU.CreatedDate = u.CreatedDate;
-                    newU.MaxTodayPoints = u.MaxTodayPoints;
+                    newU.TodayPointsReceived = u.TodayPointsReceived;
+                    newU.PrizeEntriesReported = u.PrizeEntriesReported;
+                    newU.PrizesToReport = u.PrizesToReport;
 
                     users.Add(newU);
                 }
@@ -94,6 +96,22 @@ namespace GasBuddy.Infrastructure
                 user = db.Users.Where(u => string.Equals(u.UserName, userName)).Include("Mobile").Include("WebSite").FirstOrDefault();
             }
             return user;
+        }
+
+        public static ContactInfo GetUserContactInfo(int userID)
+        {
+            ContactInfo cInfo = null;
+
+            using (var db = new Db())
+            {
+                int? contactInfoID = db.UsersContactInfo.Where(o => o.UserID == userID).Select(o => o.ContactInfoID).FirstOrDefault();
+                if (contactInfoID != null)
+                {
+                    cInfo = db.ContactInfo.Find(contactInfoID);
+                }
+            }
+
+            return cInfo;
         }
     }
 }
