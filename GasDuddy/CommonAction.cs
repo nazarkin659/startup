@@ -101,23 +101,16 @@ namespace GasBuddy
         {
             if (user != null && user.Website != null && !string.IsNullOrWhiteSpace(user.Website.URL))
             {
-                if (!user.Website.isLoggedIn && (!Authorization.LoginWebsite(ref user)))
+                CQ html = SpiderUse.GetResponse(user.Website.URL, false, user.Website.Cookies);
+                if (!html.IsNullOrEmpty())
                 {
-                    //TODO: Logs here
-                }
-                else
-                {
-                    CQ html = SpiderUse.GetResponse(user.Website.URL, false, user.Website.Cookies);
-                    if (!html.IsNullOrEmpty())
-                    {
-                        string tdPoints = html["th:contains('s Points')+td"].Text().Trim();
+                    string tdPoints = html["th:contains('s Points')+td"].Text().Trim();
 
-                        if (!string.IsNullOrWhiteSpace(tdPoints))
-                        {
-                            decimal todayPoints;
-                            if (decimal.TryParse(tdPoints.Trim(), out todayPoints))
-                                return Convert.ToInt32(todayPoints);
-                        }
+                    if (!string.IsNullOrWhiteSpace(tdPoints))
+                    {
+                        decimal todayPoints;
+                        if (decimal.TryParse(tdPoints.Trim(), out todayPoints))
+                            return Convert.ToInt32(todayPoints);
                     }
                 }
             }
@@ -134,7 +127,7 @@ namespace GasBuddy
                     return true;
                 else
                 {
-                    SiAuto.Main.LogMessage("{0} Today's Points == {1}, continue...", todayPoints);
+                    SiAuto.Main.LogMessage("[{0}] Today's Points == [{1}], continue...", user.UserName, todayPoints);
                 }
             }
 
@@ -259,7 +252,10 @@ namespace GasBuddy
             {
                 int? prizesAvailable = GetAvailablePrizes(ref prizeReportHtml);
                 if (prizesAvailable != null && (prizesAvailable == oldPrizesValue - prizesToReport))
+                {
+                    user.PrizesToReport--;
                     return true;
+                }
             }
 
             return false;
@@ -274,17 +270,21 @@ namespace GasBuddy
         {
             if (!prizesHtml.IsNullOrEmpty())
             {
-                string text = prizesHtml[":contains('You can get up to'):last"].Text();
-                if (!string.IsNullOrWhiteSpace(text))
+                if (prizesHtml[":contains('t have any points'):last"].IsNullOrEmpty())
                 {
-                    string ticketsText = text.Substring("up to", "tickets");
-                    if (!string.IsNullOrWhiteSpace(ticketsText))
+                    string text = prizesHtml[":contains('You can get up to'):last"].Text();
+                    if (!string.IsNullOrWhiteSpace(text))
                     {
-                        int tickets;
-                        if (int.TryParse(ticketsText.Trim(), out tickets))
-                            return tickets;
+                        string ticketsText = text.Substring("up to", "ticket");
+                        if (!string.IsNullOrWhiteSpace(ticketsText))
+                        {
+                            int tickets;
+                            if (int.TryParse(ticketsText.Trim(), out tickets))
+                                return tickets;
+                        }
                     }
                 }
+                else return 0;
             }
 
             return null;
@@ -300,6 +300,87 @@ namespace GasBuddy
                 if (!user.Website.isLoggedIn)
                     Authorization.LoginWebsite(ref user);
             }
+        }
+
+        public static bool isReadyToReportPrices(ref User user)
+        {
+            if (user != null)
+            {
+                if (string.IsNullOrWhiteSpace(user.UserName))
+                    SiAuto.Main.LogObjectValue(Level.Error, "User", user);
+                else if (string.IsNullOrWhiteSpace(user.Password))
+                    SiAuto.Main.LogObjectValue(Level.Error, "Password", user); //check this
+                else if (user.Mobile == null)
+                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName, user.Mobile);
+                else if (string.IsNullOrWhiteSpace(user.Mobile.CheckLoginURL))
+                    SiAuto.Main.LogObjectValue(Level.Error, "CheckLoginURL", user.Mobile.CheckLoginURL);
+                else if (user.Website == null)
+                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName + " WebSite =", user.Website);
+                else if (string.IsNullOrWhiteSpace(user.Website.URL))
+                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName + " WebSite.URL =", user.Website.URL);
+                else if (string.IsNullOrWhiteSpace(user.Website.CheckLoginURL))
+                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName + " WebiSite.CheckLoginURL =", user.Website.CheckLoginURL);
+                else
+                {
+                    if (user.PrizesToReport == 0)
+                    {
+                        SiAuto.Main.LogWarning("[{0}] PrizesToReport == 0", user.UserName);
+                        return false;
+                    }
+
+                    if (ProceedMobileLogin(ref user) && ProceedWebSiteLogin(ref user))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Should be used for any login attempt.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public static bool ProceedMobileLogin(ref User user)
+        {
+            if (user != null)
+            {
+                int count = 1;
+                while (!user.Mobile.isLoggedIn && count <= 3)
+                {
+                    if (!Authorization.LoginMobile(ref user))
+                    {
+                        SiAuto.Main.LogError("CommonAction => ProceedMobileLogin: Failed to Login, attempt [{0}], Mobile.Response [{1}]", count, user.Mobile.Response);
+                    }
+                    count++;
+                }
+
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Should be used for any login attempt.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public static bool ProceedWebSiteLogin(ref User user)
+        {
+            if (user != null)
+            {
+                int count = 1;
+                while (!user.Website.isLoggedIn && count <= 3)
+                {
+                    if (!Authorization.LoginWebsite(ref user))
+                    {
+                        SiAuto.Main.LogError("CommonAction => ProceedWebSiteLogin: Failed to Login, attempt [{0}], Mobile.Response [{1}]", count, user.Website.Response);
+                    }
+                    count++;
+                }
+
+                return true;
+            }
+            return false;
         }
 
         private static string BuildReportPriceUrl(string stationUrl)

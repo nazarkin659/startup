@@ -9,6 +9,7 @@ using System.Net;
 using GasBuddy.Model;
 using GasBuddy.Infrastructure;
 using GasBuddy.Infrastructure.Base;
+using System.Threading;
 
 namespace GasBuddy
 {
@@ -16,15 +17,17 @@ namespace GasBuddy
     {
         static void Main(string[] args)
         {
-            //SiAuto.Si.Connections = "file(filename=\"c:\\log.txtxt\", level=\"error\")";
-            //SiAuto.Si.Enabled = true;
-            //SiAuto.Main.LogError("test error");
+            SiAuto.Si.Connections = "tcp()";
+            SiAuto.Si.Enabled = true;
+            SiAuto.Si.DefaultLevel = Level.Debug;
+            SiAuto.Main.LogError("test error");
+            ReportPrices();
 
 
             try
             {
 
-                User user = UsersFunc.GetUser("gasbuddy659");
+                User user = UsersFunc.GetUser("gasbuddy6591");
                 ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(user.UserID);
                 CommonAction.CheckAuthorization(ref user);
                 CommonAction.ReportPrizeEntries(ref user, ref userContactInfo);
@@ -93,47 +96,58 @@ namespace GasBuddy
 
                     foreach (User user in usersToProcess)
                     {
-                        User innerUser = user;
-                        if (!innerUser.Mobile.isLoggedIn)
+                        try
                         {
-                            if (!Authorization.LoginMobile(ref innerUser))
-                            {
-                                SiAuto.Main.LogError("Can't Log In Mobile, User = {0}", user.UserName);
-                                break;
-                                //TODO: Improve
-                            }
-                        }
-                        if (!innerUser.Website.isLoggedIn)
-                        {
-                            if (!Authorization.LoginWebsite(ref innerUser))
-                            {
-                                SiAuto.Main.LogError("Can't Log In WebSite, User = {0}", user.UserName);
-                                break;
-                                //TODO: Improve
-                            }
-                        }
 
-                        foreach (string station in stations)
-                        {
-                            try
+                            User innerUser = user;
+                            if (!CommonAction.isReadyToReportPrices(ref innerUser))
+                                break;
+
+                            foreach (string station in stations)
                             {
-                                if (user != null)
+                                try
                                 {
-                                    if (CommonAction.SuccessReportPriceMobile(station, user))
+                                    if (user != null)
                                     {
-                                        if (CommonAction.isReachedTodayMaxPoints(user))
-                                            break; //this user is done
-                                    }
-                                    else
-                                    {
-                                        //TODO: Logs ???
+                                        if (CommonAction.SuccessReportPriceMobile(station, user))
+                                        {
+                                            if (CommonAction.isReachedTodayMaxPoints(user))
+                                            {
+                                                ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(innerUser.UserID);
+                                                if (userContactInfo != null)
+                                                {
+                                                    SiAuto.Main.LogMessage("[{0}] going to place prizes, wait 10sec before.", innerUser.UserName);
+                                                    Thread.Sleep(10000);
+                                                    if (CommonAction.ReportPrizeEntries(ref innerUser, ref userContactInfo))
+                                                    {
+                                                        SiAuto.Main.LogMessage("[{0}] Successfully reported prizes, Count =[{1}]", innerUser.UserName, innerUser.PrizeEntriesReported);
+                                                        UsersFunc.UpdateUser(innerUser);
+                                                        break;
+                                                    }
+                                                    else
+                                                    {
+                                                        SiAuto.Main.LogError("[{0}] Could not report prizes.", user.UserName);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            //TODO: Logs ???
+                                        }
                                     }
                                 }
+                                catch (Exception e)
+                                {
+                                    SiAuto.Main.LogException("Stations Loop, User " + user.UserName, e);
+                                }
                             }
-                            catch (Exception e)
-                            {
-                                SiAuto.Main.LogException("Users loop", e);
-                            }
+
+                            
+                        }
+                        catch (Exception usersLoop)
+                        {
+                            SiAuto.Main.LogException("Users Loop, User " + user.UserName, usersLoop);
                         }
                     }
                 }

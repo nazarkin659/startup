@@ -113,6 +113,8 @@ namespace WebSpider
 
         private static void SetSpider(string url, ref Spider spider, bool trackCookies = false, CookieCollection cookies = default(CookieCollection), string postVars = default(string))
         {
+            Thread.Sleep(1000);
+            SiAuto.Main.LogMessage("Spider Sleeps...[{0}]", url);
             spider.Url = url;
             if (!postVars.IsNullOrWhiteSpace())
             {
@@ -236,8 +238,5 @@ namespace WebSpider
             }
             return null;
         }
-
-
-
     }
 }
