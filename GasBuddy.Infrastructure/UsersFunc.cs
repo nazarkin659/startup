@@ -12,6 +12,7 @@ namespace GasBuddy.Infrastructure
 {
     public class UsersFunc : Db
     {
+        private static Db dbConnection = null;
 
         public static bool AddUser(List<User> users)
         {
@@ -98,6 +99,16 @@ namespace GasBuddy.Infrastructure
             return user;
         }
 
+        public static User GetUser(int userID)
+        {
+            User user = null;
+            using (var db = new Db())
+            {
+                user = db.Users.Where(u => u.UserID == userID).Include("Mobile").Include("WebSite").FirstOrDefault();
+            }
+            return user;
+        }
+
         public static ContactInfo GetUserContactInfo(int userID)
         {
             ContactInfo cInfo = null;
@@ -112,6 +123,16 @@ namespace GasBuddy.Infrastructure
             }
 
             return cInfo;
+        }
+
+        public static User GetUserIDByProcessQueue(ProcessQueue queue)
+        {
+            User user = null;
+            if (queue != null)
+            {
+                user = UsersFunc.GetUser(queue.UserID);
+            }
+            return user;
         }
     }
 }

@@ -10,6 +10,8 @@ using Blablabla;
 using System.Net;
 using Newtonsoft.Json;
 using System.Web;
+using GasBuddy.Model;
+using GasBuddy.Infrastructure;
 
 namespace TestApp
 {
@@ -46,6 +48,28 @@ namespace TestApp
             }
             catch (Exception e)
             {
+            }
+        }
+
+        public static void TestProcessQueue()
+        {
+            try
+            {
+                ProcessQueue queue = new ProcessQueue();
+                queue.FailCount = 1;
+                queue.Successful = false;
+                queue.UserID = 10;
+
+                ProcessQueueF.AddRecord(queue);
+
+                ProcessQueueF.RemoveRecord(queue);
+
+                ProcessQueueF.AddRecord(queue);
+
+                ProcessQueueF.UpdateRecordInQueue(queue);
+            }
+            catch (Exception e)
+            { 
             }
         }
     }

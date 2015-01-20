@@ -15,11 +15,80 @@ namespace GasBuddy
     public class CommonAction
     {
         /// <summary>
-        /// Get stations urls.
+        /// Report prices on mobile website
+        /// </summary>
+        /// <param name="stationUrl"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public static bool SuccessReportPriceMobile(string stationUrl, User user)
+        {
+            try
+            {
+                SiAuto.Main.EnterMethod("CommonAction => SuccessReportPriceMobile");
+
+                if (!stationUrl.IsNullOrWhiteSpace() && user != null)
+                {
+                    CQ html = SpiderUse.GetResponse(stationUrl, true, user.Mobile.Cookies);
+                    Model.Common.Price price = GetPrevPrices(ref html);
+                    if (!html.IsNullOrEmpty() && price.IsValid())
+                    {
+                        Common.ASPStats stats = new Common.ASPStats(html);
+                        if (stats != null)
+                        {
+                            string reportPriceUrl = BuildReportPriceUrl(stationUrl);
+                            if (!reportPriceUrl.IsNullOrWhiteSpace())
+                            {
+                                string postData = string.Format("__VIEWSTATE={0}&__VIEWSTATEGENERATOR={1}&__EVENTVALIDATION={2}&ctl00$content$fvStation$hfId={3}&ctl00$content$fvStation$hfCountry={4}&ctl00$content$fvStation$txtRegular={5}&ctl00$content$fvStation$txtMidgrade={6}&ctl00$content$fvStation$txtPremium={7}&ctl00$content$fvStation$txtDiesel={8}&ctl00$content$fvStation$txtComments={9}&ctl00$content$fvStation$ddlTimeSpotted={10}&ctl00$content$fvStation$btnSubmitPrices={11}&ctl00$content$fvStation$hfName={12}&ctl00$content$fvStation$hfAddress={13}&ctl00$content$fvStation$hfArea={14}&ctl00$content$fvStation$hfTimeOffset={15}",
+                                    stats.ViewState,
+                                    stats.ViewStateGenerator,
+                                    stats.EventValidation,
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfId']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfCountry']"].Val()),
+                                    HttpUtility.UrlEncode(price.Regular),
+                                    HttpUtility.UrlEncode(price.Midgrade),
+                                    HttpUtility.UrlEncode(price.Premium),
+                                    HttpUtility.UrlEncode(price.Diesel),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$txtComments']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$ddlTimeSpotted']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$btnSubmitPrices']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfName']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfAddress']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfArea']"].Val()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfTimeOffset']"].Val())
+                                    );
+
+                                Spider spider = null;
+                                CQ response = SpiderUse.GetResponse(reportPriceUrl, ref spider, false, user.Mobile.Cookies, postData);
+                                if (!response.IsNullOrEmpty() && isReported(ref response, ref user))
+                                {
+                                    return true;
+                                }
+                                else
+                                {
+                                    throw new Exception("Failed report prises.");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                SiAuto.Main.LogException(string.Format("User [{0}], StationURL [{1}]", user.UserName, stationUrl), e);
+            }
+            finally
+            {
+                SiAuto.Main.LeaveMethod("CommonAction => SuccessReportPriceMobile");
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Get stations urls from GasBuddy.
         /// </summary>
         /// <param name="zipCode">Area zip code to search.</param>
         /// <returns></returns>
-        public static List<string> GetStations(string zipCode)
+        public static List<string> GetStationUrls(string zipCode)
         {
             if (!zipCode.IsNullOrWhiteSpace())
             {
@@ -34,6 +103,11 @@ namespace GasBuddy
                         List<string> urls = searchPage[selector].GetMatchedAttrs("href").Select(u => StringExtentions.CorrectUrl("https://m.gasbuddy.com", u)).ToList();
                         return urls;
                     }
+                    else if (!searchPage[":contains('No Stations Found')"].IsNullOrEmpty())
+                    {
+                        SiAuto.Main.LogMessage("No stations were found for [{0}]", zipCode);
+                        return new List<string>();
+                    }
                     else
                         SiAuto.Main.LogError("GetStations Selector has been changed. [{0}]", url);
                 }
@@ -42,227 +116,7 @@ namespace GasBuddy
         }
 
         /// <summary>
-        /// Report prices on mobile website
-        /// </summary>
-        /// <param name="stationUrl"></param>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public static bool SuccessReportPriceMobile(string stationUrl, User user)
-        {
-            if (!stationUrl.IsNullOrWhiteSpace() && user != null)
-            {
-                CQ html = SpiderUse.GetResponse(stationUrl, true, user.Mobile.Cookies);
-                Model.Common.Price price = GetPrevPrices(ref html);
-                if (!html.IsNullOrEmpty() && price.IsValid())
-                {
-                    Common.ASPStats stats = new Common.ASPStats(html);
-                    if (stats != null)
-                    {
-                        string reportPriceUrl = BuildReportPriceUrl(stationUrl);
-                        if (!reportPriceUrl.IsNullOrWhiteSpace())
-                        {
-                            string postData = string.Format("__VIEWSTATE={0}&__VIEWSTATEGENERATOR={1}&__EVENTVALIDATION={2}&ctl00$content$fvStation$hfId={3}&ctl00$content$fvStation$hfCountry={4}&ctl00$content$fvStation$txtRegular={5}&ctl00$content$fvStation$txtMidgrade={6}&ctl00$content$fvStation$txtPremium={7}&ctl00$content$fvStation$txtDiesel={8}&ctl00$content$fvStation$txtComments={9}&ctl00$content$fvStation$ddlTimeSpotted={10}&ctl00$content$fvStation$btnSubmitPrices={11}&ctl00$content$fvStation$hfName={12}&ctl00$content$fvStation$hfAddress={13}&ctl00$content$fvStation$hfArea={14}&ctl00$content$fvStation$hfTimeOffset={15}",
-                                stats.ViewState,
-                                stats.ViewStateGenerator,
-                                stats.EventValidation,
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfId']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfCountry']"].Val()),
-                                HttpUtility.UrlEncode(price.Regular),
-                                HttpUtility.UrlEncode(price.Midgrade),
-                                HttpUtility.UrlEncode(price.Premium),
-                                HttpUtility.UrlEncode(price.Diesel),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$txtComments']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$ddlTimeSpotted']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$btnSubmitPrices']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfName']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfAddress']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfArea']"].Val()),
-                                HttpUtility.UrlEncode(html["[name='ctl00$content$fvStation$hfTimeOffset']"].Val())
-                                );
-
-                            Spider spider = null;
-                            CQ response = SpiderUse.GetResponse(reportPriceUrl, ref spider, false, user.Mobile.Cookies, postData);
-                            if (!response.IsNullOrEmpty() && isReported(ref response, ref user))
-                            {
-                                return true;
-                            }
-                            else
-                            {
-                                //TO DO: Logs 
-                            }
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        public static int? GetTodaysPoints(ref User user)
-        {
-            if (user != null && user.Website != null && !string.IsNullOrWhiteSpace(user.Website.URL))
-            {
-                CQ html = SpiderUse.GetResponse(user.Website.URL, false, user.Website.Cookies);
-                if (!html.IsNullOrEmpty())
-                {
-                    string tdPoints = html["th:contains('s Points')+td"].Text().Trim();
-
-                    if (!string.IsNullOrWhiteSpace(tdPoints))
-                    {
-                        decimal todayPoints;
-                        if (decimal.TryParse(tdPoints.Trim(), out todayPoints))
-                            return Convert.ToInt32(todayPoints);
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public static bool isReachedTodayMaxPoints(User user)
-        {
-            if (user != null && user.Website != null)
-            {
-                int? todayPoints = CommonAction.GetTodaysPoints(ref user);
-                if (todayPoints != null && todayPoints == user.TodayPointsReceived)
-                    return true;
-                else
-                {
-                    SiAuto.Main.LogMessage("[{0}] Today's Points == [{1}], continue...", user.UserName, todayPoints);
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Place Prize Entries. 
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns>Updated User Object</returns>
-        public static bool ReportPrizeEntries(ref User user, ref ContactInfo userContacInto)
-        {
-            if (user != null && userContacInto != null)
-            {
-                string prizeReportURL = "https://m.gasbuddy.com/Prize.aspx";
-                CQ html = SpiderUse.GetResponse(prizeReportURL, false, user.Mobile.Cookies);
-                if (!html.IsNullOrEmpty())
-                {
-                    int? prizes = GetAvailablePrizes(ref html);
-                    if (prizes == null)
-                        SiAuto.Main.LogError("Can't get available prizes to report. User {0}", user.UserName);
-                    else if (prizes == 0)
-                    {
-                        SiAuto.Main.LogMessage("No Available Prizes, User {0}", user.UserName);
-                    }
-                    else
-                    {
-                        int prizesToReport = 0;
-
-                        #region Set Prizes To Report
-                        switch (user.PrizesToReport)
-                        {
-                            case 0: //do not report prizes
-                                return true;
-
-                            case -1: //report all prizes available
-                                prizesToReport = (int)prizes;
-                                break;
-
-                            default:
-                                prizesToReport = user.PrizesToReport;
-                                break;
-                        }
-                        #endregion Set Prizes To Report
-
-                        Common.ASPStats stats = new Common.ASPStats(html);
-                        if (stats != null)
-                        {
-                            string postData = string.Format("__EVENTVALIDATION={0}&__VIEWSTATE={1}&__VIEWSTATEGENERATOR={2}&ctl00$content$txtTickets={3}&ctl00$content$btnGetTickets={4}",
-                                    stats.EventValidation,
-                                    stats.ViewState,
-                                    stats.ViewStateGenerator,
-                                    HttpUtility.UrlEncode(prizesToReport.ToString()),
-                                    HttpUtility.UrlEncode(html["[name='ctl00$content$btnGetTickets']"].Val())
-                                );
-
-                            Spider spider = null;
-                            CQ prizesContactInfoResponse = SpiderUse.GetResponse(prizeReportURL, ref spider, true, user.Mobile.Cookies, postData);
-                            string contactInfoUrl = SpiderUse.GetResponseURL(ref spider);
-                            if (!prizesContactInfoResponse.IsNullOrEmpty() &&
-                                !string.IsNullOrWhiteSpace(contactInfoUrl) &&
-                                !prizesContactInfoResponse[string.Format(":contains('You have entered {0} ticket for this prize draw')", prizesToReport.ToString())].IsNullOrEmpty())
-                            {
-                                stats = new Common.ASPStats(prizesContactInfoResponse);
-                                if (stats != null)
-                                {
-                                    string contactInfoPagePostData = string.Format("__VIEWSTATE={0}&__VIEWSTATEGENERATOR={1}&__EVENTVALIDATION={2}&ctl00$content$fvContactInfo$hfTickets={3}&ctl00$content$fvContactInfo$txtFirstName={4}&ctl00$content$fvContactInfo$txtLastName={5}&ctl00$content$fvContactInfo$txtAddress={6}&ctl00$content$fvContactInfo$txtAddress2={7}&ctl00$content$fvContactInfo$txtCity={8}&ctl00$content$fvContactInfo$ddlState={9}&ctl00$content$fvContactInfo$txtZipCode={10}&ctl00$content$fvContactInfo$txtEmail={11}&ctl00$content$fvContactInfo$txtSubmit={12}",
-                                        HttpUtility.HtmlDecode(stats.ViewState),
-                                        HttpUtility.HtmlDecode(stats.ViewStateGenerator),
-                                        HttpUtility.HtmlDecode(stats.EventValidation),
-                                        HttpUtility.HtmlDecode(prizesToReport.ToString()),
-                                        HttpUtility.HtmlDecode(userContacInto.FirstName),
-                                        HttpUtility.HtmlDecode(userContacInto.LastName),
-                                        HttpUtility.HtmlDecode(userContacInto.Address),
-                                        HttpUtility.HtmlDecode(userContacInto.Unit),
-                                        HttpUtility.HtmlDecode(userContacInto.City),
-                                        HttpUtility.HtmlDecode(userContacInto.State),
-                                        HttpUtility.HtmlDecode(userContacInto.ZipCode.ToString()),
-                                        HttpUtility.HtmlDecode(userContacInto.Email),
-                                        HttpUtility.HtmlDecode(prizesContactInfoResponse["[name='ctl00$content$fvContactInfo$txtSubmit']"].Val())
-                                        );
-
-                                    CQ finalResponse = SpiderUse.GetResponse(contactInfoUrl, false, user.Mobile.Cookies, contactInfoPagePostData);
-                                    if (finalResponse.IsNullOrEmpty() || !ValidatePrizeReport(ref user, ref finalResponse, prizes, prizesToReport))
-                                        SiAuto.Main.LogError("Report Failed: User {0}", user.UserName);
-                                    else
-                                    {
-                                        SiAuto.Main.LogMessage("Reported Succsessfully, User {0}", user.UserName);
-                                        int? entriesReported = GetPrizeEntriesReported(ref finalResponse);
-                                        if (entriesReported == null)
-                                        {
-                                            SiAuto.Main.LogError("Entries Reported  == null, User {0}", user.UserName);
-                                        }
-                                        else if (entriesReported == 0)
-                                        {
-                                            SiAuto.Main.LogError("Should not happen. Entries Reported == 0. User {0}", user.UserName);
-                                        }
-                                        else
-                                        {
-                                            user.PrizeEntriesReported = entriesReported;
-                                            return true;
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                SiAuto.Main.LogError("Can't report prizes, User {0}", user.UserName);
-                            }
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private static bool ValidatePrizeReport(ref User user, ref CQ prizeReportHtml, int? oldPrizesValue, int? prizesToReport)
-        {
-            if (user != null && !prizeReportHtml.IsNullOrEmpty() && oldPrizesValue != null && prizesToReport != null)
-            {
-                int? prizesAvailable = GetAvailablePrizes(ref prizeReportHtml);
-                if (prizesAvailable != null && (prizesAvailable == oldPrizesValue - prizesToReport))
-                {
-                    user.PrizesToReport--;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Get max available prizes to report.
+        /// Get max available prizes to report from response.
         /// </summary>
         /// <param name="prizesHtml">https://m.gasbuddy.com/Prize.aspx</param>
         /// <returns></returns>
@@ -289,20 +143,44 @@ namespace GasBuddy
 
             return null;
         }
-
-        public static void CheckAuthorization(ref User user)
+        public static int? GetTodaysPoints(ref User user)
         {
-            if (user != null && user.Mobile != null && user.Website != null)
+            if (user != null && user.Website != null && !string.IsNullOrWhiteSpace(user.Website.URL))
             {
-                if (!user.Mobile.isLoggedIn)
-                    Authorization.LoginMobile(ref user);
+                CQ html = SpiderUse.GetResponse(user.Website.URL, false, user.Website.Cookies);
+                if (!html.IsNullOrEmpty())
+                {
+                    string tdPoints = html["th:contains('s Points')+td"].Text().Trim();
 
-                if (!user.Website.isLoggedIn)
-                    Authorization.LoginWebsite(ref user);
+                    if (!string.IsNullOrWhiteSpace(tdPoints))
+                    {
+                        decimal todayPoints;
+                        if (decimal.TryParse(tdPoints.Trim(), out todayPoints))
+                            return Convert.ToInt32(todayPoints);
+                    }
+                }
             }
+
+            return null;
         }
 
-        public static bool isReadyToReportPrices(ref User user)
+
+        public static bool isReachedTodayMaxPoints(User user)
+        {
+            if (user != null && user.Website != null)
+            {
+                int? todayPoints = CommonAction.GetTodaysPoints(ref user);
+                if (todayPoints != null && todayPoints == user.TodayPointsReceived)
+                    return true;
+                else
+                {
+                    SiAuto.Main.LogMessage("[{0}] Today's Points == [{1}], continue...", user.UserName, todayPoints);
+                }
+            }
+
+            return false;
+        }
+        public static bool isReadyToReportPrices(ref User user, bool forseReport = false)
         {
             if (user != null)
             {
@@ -324,7 +202,12 @@ namespace GasBuddy
                 {
                     if (user.PrizesToReport == 0)
                     {
-                        SiAuto.Main.LogWarning("[{0}] PrizesToReport == 0", user.UserName);
+                        SiAuto.Main.LogWarning("isReadyToReportPrices => [{0}] PrizesToReport == 0", user.UserName);
+                        return false;
+                    }
+                    if (user.PrizeEntriesReported >= user.PrizesToReport && !forseReport)
+                    {
+                        SiAuto.Main.LogWarning("isReadyToReportPrices => [{0}] Prizes has been reported today.", user.UserName);
                         return false;
                     }
 
@@ -334,6 +217,124 @@ namespace GasBuddy
             }
             return false;
         }
+
+
+        /// <summary>
+        /// Place Prize Entries. 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns>Updated User Object</returns>
+        public static bool ReportPrizeEntries(ref User user, ref ContactInfo userContacInto)
+        {
+            try
+            {
+                if (user != null && userContacInto != null)
+                {
+                    string prizeReportURL = "https://m.gasbuddy.com/Prize.aspx";
+                    CQ html = SpiderUse.GetResponse(prizeReportURL, false, user.Mobile.Cookies);
+                    if (!html.IsNullOrEmpty())
+                    {
+                        int? prizes = GetAvailablePrizes(ref html);
+                        if (prizes == null)
+                            throw new Exception(string.Format("Can't get available prizes to report. User {0}", user.UserName));
+                        else if (prizes == 0)
+                        {
+                            SiAuto.Main.LogMessage("No Available Prizes, User {0}. Stopped.", user.UserName);
+                        }
+                        else
+                        {
+                            int prizesToReport = 0;
+
+                            #region Set Prizes To Report
+                            switch (user.PrizesToReport)
+                            {
+                                case 0: //do not report prizes
+                                    return true;
+
+                                case -1: //report all prizes available
+                                    prizesToReport = (int)prizes;
+                                    break;
+
+                                default:
+                                    prizesToReport = user.PrizesToReport;
+                                    break;
+                            }
+                            #endregion Set Prizes To Report
+
+                            Common.ASPStats stats = new Common.ASPStats(html);
+
+                            string postData = string.Format("__EVENTVALIDATION={0}&__VIEWSTATE={1}&__VIEWSTATEGENERATOR={2}&ctl00$content$txtTickets={3}&ctl00$content$btnGetTickets={4}",
+                                    stats.EventValidation,
+                                    stats.ViewState,
+                                    stats.ViewStateGenerator,
+                                    HttpUtility.UrlEncode(prizesToReport.ToString()),
+                                    HttpUtility.UrlEncode(html["[name='ctl00$content$btnGetTickets']"].Val())
+                                );
+
+                            Spider spider = null;
+                            CQ prizesContactInfoResponse = SpiderUse.GetResponse(prizeReportURL, ref spider, true, user.Mobile.Cookies, postData);
+                            string contactInfoUrl = SpiderUse.GetResponseURL(ref spider);
+                            if (prizesContactInfoResponse.IsNullOrEmpty() ||
+                                string.IsNullOrWhiteSpace(contactInfoUrl) ||
+                                prizesContactInfoResponse[string.Format(":contains('You have entered {0} ticket for this prize draw')", prizesToReport.ToString())].IsNullOrEmpty())
+                            {
+                                SiAuto.Main.LogObjectValue(Level.Error, "Server Response", prizesContactInfoResponse.Render());
+                                throw new Exception();
+                            }
+                            else
+                            {
+                                stats = new Common.ASPStats(prizesContactInfoResponse);
+                                string contactInfoPagePostData = string.Format("__VIEWSTATE={0}&__VIEWSTATEGENERATOR={1}&__EVENTVALIDATION={2}&ctl00$content$fvContactInfo$hfTickets={3}&ctl00$content$fvContactInfo$txtFirstName={4}&ctl00$content$fvContactInfo$txtLastName={5}&ctl00$content$fvContactInfo$txtAddress={6}&ctl00$content$fvContactInfo$txtAddress2={7}&ctl00$content$fvContactInfo$txtCity={8}&ctl00$content$fvContactInfo$ddlState={9}&ctl00$content$fvContactInfo$txtZipCode={10}&ctl00$content$fvContactInfo$txtEmail={11}&ctl00$content$fvContactInfo$txtSubmit={12}",
+                                    HttpUtility.HtmlDecode(stats.ViewState),
+                                    HttpUtility.HtmlDecode(stats.ViewStateGenerator),
+                                    HttpUtility.HtmlDecode(stats.EventValidation),
+                                    HttpUtility.HtmlDecode(prizesToReport.ToString()),
+                                    HttpUtility.HtmlDecode(userContacInto.FirstName),
+                                    HttpUtility.HtmlDecode(userContacInto.LastName),
+                                    HttpUtility.HtmlDecode(userContacInto.Address),
+                                    HttpUtility.HtmlDecode(userContacInto.Unit),
+                                    HttpUtility.HtmlDecode(userContacInto.City),
+                                    HttpUtility.HtmlDecode(userContacInto.State),
+                                    HttpUtility.HtmlDecode(userContacInto.ZipCode.ToString()),
+                                    HttpUtility.HtmlDecode(userContacInto.Email),
+                                    HttpUtility.HtmlDecode(prizesContactInfoResponse["[name='ctl00$content$fvContactInfo$txtSubmit']"].Val())
+                                    );
+
+
+                                CQ finalResponse = SpiderUse.GetResponse(contactInfoUrl, false, user.Mobile.Cookies, contactInfoPagePostData);
+                                if (finalResponse.IsNullOrEmpty() || !ValidatePrizeReport(ref user, ref finalResponse, prizes, prizesToReport))
+                                    throw new Exception("Validation Prize Report failed.");
+                                else
+                                {
+
+                                    SiAuto.Main.LogColored(System.Drawing.Color.Green, "Prizes Reported Succsessfully [{0}]", user.UserName);
+                                    int? entriesReported = GetPrizeEntriesReported(ref finalResponse);
+                                    if (entriesReported == null)
+                                        throw new Exception("Failed to match prizes reported with prizes available.");
+                                    else
+                                        if (entriesReported == 0)
+                                            throw new Exception("Should not happen.");
+                                        else
+                                        {
+                                            user.PrizeEntriesReported = entriesReported;
+                                            return true;
+                                        }
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                SiAuto.Main.LogException(string.Format("User [{0}], ContactInfo [{}]", user.UserName, userContacInto.ID), e);
+            }
+
+            return false;
+        }
+
+
 
         /// <summary>
         /// Should be used for any login attempt.
@@ -358,7 +359,6 @@ namespace GasBuddy
             }
             return false;
         }
-
         /// <summary>
         /// Should be used for any login attempt.
         /// </summary>
@@ -383,6 +383,7 @@ namespace GasBuddy
             return false;
         }
 
+
         private static string BuildReportPriceUrl(string stationUrl)
         {
             if (!stationUrl.IsNullOrWhiteSpace())
@@ -400,7 +401,6 @@ namespace GasBuddy
             }
             return null;
         }
-
         private static Model.Common.Price GetPrevPrices(ref CQ page)
         {
             if (!page.IsNullOrEmpty())
@@ -417,7 +417,6 @@ namespace GasBuddy
             }
             return null;
         }
-
         private static bool isReported(ref CQ html, ref User user)
         {
             //if (!html.IsNullOrEmpty()
@@ -426,12 +425,12 @@ namespace GasBuddy
             int? todayPoints = GetTodaysPoints(ref user);
             if (todayPoints != null && todayPoints > 0)
             {
+                user.TodayPointsReceived = (int)todayPoints;
                 return true;
             }
 
             return false;
         }
-
         private static int? GetPrizeEntriesReported(ref CQ prizeEntriesHtml)
         {
             if (!prizeEntriesHtml.IsNullOrEmpty())
@@ -449,6 +448,20 @@ namespace GasBuddy
                 }
             }
             return null;
+        }
+        private static bool ValidatePrizeReport(ref User user, ref CQ prizeReportHtml, int? oldPrizesValue, int? prizesToReport)
+        {
+            if (user != null && !prizeReportHtml.IsNullOrEmpty() && oldPrizesValue != null && prizesToReport != null)
+            {
+                int? prizesAvailable = GetAvailablePrizes(ref prizeReportHtml);
+                if (prizesAvailable != null && (prizesAvailable == oldPrizesValue - prizesToReport))
+                {
+                    user.PrizesToReport--;
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

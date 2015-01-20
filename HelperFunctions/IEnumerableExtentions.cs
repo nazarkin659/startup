@@ -8,6 +8,8 @@ namespace HelperFunctions
 {
     public static class IEnumerableExtentions
     {
+        private static Random random = new Random((int)DateTime.Now.Ticks);
+
         public static bool IsNullOrEmpty<TSource>(this IEnumerable<TSource> o)
         {
             if (o == null || o.Count() == 0)
@@ -28,6 +30,17 @@ namespace HelperFunctions
         {
             if (!dict.ContainsKey(key))
                 dict.Add(key, value);
+        }
+
+        public static TSource Random<TSource>(this List<TSource> o)
+        {
+            if (!o.IsNullOrEmpty())
+            {
+                int index = random.Next(0, o.Count());
+                return o[index];
+            }
+
+            return default(TSource);
         }
     }
 }

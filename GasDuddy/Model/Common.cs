@@ -55,7 +55,5 @@ namespace GasBuddy.Model
                 return false;
             }
         }
-
-      
     }
 }

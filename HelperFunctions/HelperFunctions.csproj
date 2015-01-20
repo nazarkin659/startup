@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CsQueryExtentions.cs" />
+    <Compile Include="DateTimeExtentions.cs" />
     <Compile Include="IEnumerableExtentions.cs" />
     <Compile Include="JsonHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -14,7 +14,7 @@ namespace TestApp
     {
         static void Main(string[] args)
         {
-            Nazar.NewtonJson();
+            Nazar.TestProcessQueue();
         }
     }
 }

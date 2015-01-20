@@ -53,6 +53,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\Db.cs" />
+    <Compile Include="ProcessQueueF.cs" />
+    <Compile Include="Stations.cs" />
     <Compile Include="UsersFunc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

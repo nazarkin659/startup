@@ -21,6 +21,9 @@ namespace GasBuddy.Infrastructure.Base
         public virtual DbSet<UsersContactInfo> UsersContactInfo { get; set; }
         public virtual DbSet<Mobile> Mobile { get; set; }
         public virtual DbSet<WebSite> WebSite { get; set; }
+        public virtual DbSet<ZipcodeStations> ZipcodeStations { get; set; }
+
+        public virtual DbSet<ProcessQueue> ProcessQueue { get; set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
         }
