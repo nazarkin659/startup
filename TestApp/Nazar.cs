@@ -69,8 +69,21 @@ namespace TestApp
                 ProcessQueueF.UpdateRecordInQueue(queue);
             }
             catch (Exception e)
-            { 
+            {
             }
+        }
+
+        public static void TestSP()
+        {
+            try
+            {
+                using (var dbConnection = new GasBuddy.Infrastructure.Base.Db())
+                {
+                    var resul = dbConnection.Database.ExecuteSqlCommand("exec [PrepareUsers]");
+                }
+            }
+            catch (Exception e)
+            { }
         }
     }
 }

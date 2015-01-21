@@ -7,7 +7,7 @@ ALTER PROCEDURE dbo.AddUser
 @Password varchar(20),
 @Email nvarchar(100),
 @PrizesToReport int = 1,
-@TodayPointsReceived int = 1000
+@TodayPointsReceived int = 0
 )
 AS 
 BEGIN

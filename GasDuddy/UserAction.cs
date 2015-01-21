@@ -13,88 +13,73 @@ namespace GasBuddy
 {
     public class UserAction : BaseClass
     {
-        public static bool Start(Model.User user)
+        public static bool isReported(ref Model.User user)
         {
             try
             {
-                SiAuto.Main.EnterMethod("UserAction => ReportPrices");
-
-                User userToProcess = UsersFunc.GetUser(user.UserName);
-                List<User> usersToProcess = new List<User> { userToProcess };
+                SiAuto.Main.EnterMethod("UserAction => isReported");
 
 
-                if (usersToProcess.IsNullOrEmpty())
-                {
-                    SiAuto.Main.LogMessage("UsersToProcess = [{0}]", usersToProcess.Count);
-                }
+                if (user == null)
+                    throw new Exception("User == null");
                 else
                 {
+                    if (!user.Mobile.isLoggedIn || !user.Website.isLoggedIn)
+                        throw new Exception("User is not logged in.");
+
                     List<int> zipcodes = Stations.GetZipcodes();
                     if (zipcodes.IsNullOrEmpty())
-                    {
-                        SiAuto.Main.LogError("Program => ReportPrices: Can not get zipcodes.");
-                    }
+                        throw new Exception("Can not get list of zipcodes");
                     else
                     {
                         int zipcodeToReport = zipcodes.Random();
                         List<ZipcodeStations> stations = GasBuddy.Infrastructure.Stations.GetStations(zipcodeToReport);
                         if (stations.IsNullOrEmpty())
                         {
-                            SiAuto.Main.LogMessage("No stations found. Zipcode [{0}]", "60641");
+                            SiAuto.Main.LogMessage("No stations found. Zipcode [{0}]", zipcodeToReport.ToString());
                         }
                         else
                         {
-                            foreach (User userLoop in usersToProcess)
+                            int maxFailCount = 3;
+                            foreach (var station in stations)
                             {
                                 try
                                 {
-                                    User innerUser = userLoop;
-                                    if (!CommonAction.isReadyToReportPrices(ref innerUser))
-                                        continue;
-
-                                    foreach (var station in stations)
+                                    if (!CommonAction.SuccessReportPriceMobile(station.StationsURL, user))
                                     {
-                                        try
+                                        maxFailCount--;
+                                        SiAuto.Main.LogError("Failed to report prices. User [{0}] StationURL [{1}] RemainFailCount [{2}]", user.UserName, station.StationsURL, maxFailCount);
+                                        if (maxFailCount == 0)
                                         {
-                                            if (userLoop != null)
+                                            SiAuto.Main.LogError("Stopped.");
+                                            return false;
+                                        }
+                                        else
+                                            SiAuto.Main.LogError("Trying another station.");
+
+                                        Thread.Sleep(10000);
+                                    }
+                                    else
+                                    {
+                                        if (CommonAction.isReachedTodayMaxPoints(user))
+                                        {
+                                            ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(user.UserID);
+                                            if (userContactInfo != null)
                                             {
-                                                if (CommonAction.SuccessReportPriceMobile(station.StationsURL, userLoop))
+                                                SiAuto.Main.LogMessage("[{0}] going to place prizes, wait 10sec before.", user.UserName);
+                                                Thread.Sleep(10000);
+                                                if (CommonAction.ReportPrizeEntries(ref user, ref userContactInfo))
                                                 {
-                                                    if (CommonAction.isReachedTodayMaxPoints(userLoop))
-                                                    {
-                                                        ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(innerUser.UserID);
-                                                        if (userContactInfo != null)
-                                                        {
-                                                            SiAuto.Main.LogMessage("[{0}] going to place prizes, wait 10sec before.", innerUser.UserName);
-                                                            Thread.Sleep(10000);
-                                                            if (CommonAction.ReportPrizeEntries(ref innerUser, ref userContactInfo))
-                                                            {
-                                                                SiAuto.Main.LogMessage("[{0}] Successfully reported prizes, Count =[{1}]", innerUser.UserName, innerUser.PrizeEntriesReported);
-                                                                UsersFunc.UpdateUser(innerUser);
-                                                                break;
-                                                            }
-                                                            else
-                                                            {
-                                                                SiAuto.Main.LogError("[{0}] Could not report prizes.", userLoop.UserName);
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    //TODO: Logs ???
+                                                    UsersFunc.UpdateUser(user);
+                                                    return true;
                                                 }
                                             }
                                         }
-                                        catch (Exception e)
-                                        {
-                                            SiAuto.Main.LogException("Stations Loop, User " + userLoop.UserName, e);
-                                        }
                                     }
                                 }
-                                catch (Exception usersLoop)
+                                catch (Exception e)
                                 {
-                                    SiAuto.Main.LogException("Users Loop, User " + userLoop.UserName, usersLoop);
+                                    SiAuto.Main.LogException("Stations Loop, User " + user.UserName, e);
                                 }
                             }
                         }
@@ -103,11 +88,11 @@ namespace GasBuddy
             }
             catch (Exception e)
             {
-                SiAuto.Main.LogException(e);
+                SiAuto.Main.LogException(string.Format("UserAction => isReported: User [{0}]", user.UserName), e);
             }
             finally
             {
-                SiAuto.Main.LeaveMethod("UserAction => ReportPrices");
+                SiAuto.Main.LeaveMethod("UserAction => isReported");
             }
 
             return false;

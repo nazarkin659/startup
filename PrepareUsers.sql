@@ -5,19 +5,19 @@ GO
 
 ALTER PROCEDURE [PrepareUsers]
 
-@UserName nvarchar (100)
+@UserName nvarchar (100) = null
 AS
 BEGIN
 
 IF @UserName IS NOT NULL
 BEGIN
 	UPDATE dbo.Users
-	SET PrizeEntriesReported = 0, TodayPointsReceived = 0
+	SET PrizeEntriesReported = 0, TodayPointsReceived = 0,PrizesToReport = 1
 	WHERE UserName = @UserName
 END
 ELSE 
 	BEGIN 
 		UPDATE dbo.Users
-		SET PrizeEntriesReported = 0, TodayPointsReceived = 0
+		SET PrizeEntriesReported = 0, TodayPointsReceived = 0, PrizesToReport = 1
 	END
 END

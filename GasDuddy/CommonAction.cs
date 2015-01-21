@@ -170,7 +170,7 @@ namespace GasBuddy
             if (user != null && user.Website != null)
             {
                 int? todayPoints = CommonAction.GetTodaysPoints(ref user);
-                if (todayPoints != null && todayPoints == user.TodayPointsReceived)
+                if (todayPoints != null && todayPoints == user.PrizesToReport * 1000)
                     return true;
                 else
                 {
@@ -184,35 +184,42 @@ namespace GasBuddy
         {
             if (user != null)
             {
-                if (string.IsNullOrWhiteSpace(user.UserName))
-                    SiAuto.Main.LogObjectValue(Level.Error, "User", user);
-                else if (string.IsNullOrWhiteSpace(user.Password))
-                    SiAuto.Main.LogObjectValue(Level.Error, "Password", user); //check this
-                else if (user.Mobile == null)
-                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName, user.Mobile);
-                else if (string.IsNullOrWhiteSpace(user.Mobile.CheckLoginURL))
-                    SiAuto.Main.LogObjectValue(Level.Error, "CheckLoginURL", user.Mobile.CheckLoginURL);
-                else if (user.Website == null)
-                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName + " WebSite =", user.Website);
-                else if (string.IsNullOrWhiteSpace(user.Website.URL))
-                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName + " WebSite.URL =", user.Website.URL);
-                else if (string.IsNullOrWhiteSpace(user.Website.CheckLoginURL))
-                    SiAuto.Main.LogObjectValue(Level.Error, user.UserName + " WebiSite.CheckLoginURL =", user.Website.CheckLoginURL);
-                else
+                try
                 {
-                    if (user.PrizesToReport == 0)
+                    if (string.IsNullOrWhiteSpace(user.UserName))
+                        throw new Exception("user.UserName == null");
+                    else if (string.IsNullOrWhiteSpace(user.Password))
+                        throw new Exception("user.Password == null");
+                    else if (user.Mobile == null)
+                        throw new Exception("user.Mobile == null");
+                    else if (string.IsNullOrWhiteSpace(user.Mobile.CheckLoginURL))
+                        throw new Exception("user.Mobile.CheckLoginURL == null");
+                    else if (user.Website == null)
+                        throw new Exception("user.Website == null");
+                    else if (string.IsNullOrWhiteSpace(user.Website.URL))
+                        throw new Exception("User.Website.URL == null");
+                    else if (string.IsNullOrWhiteSpace(user.Website.CheckLoginURL))
+                        throw new Exception("user.Website.CheckLoginURL == null");
+                    else
                     {
-                        SiAuto.Main.LogWarning("isReadyToReportPrices => [{0}] PrizesToReport == 0", user.UserName);
-                        return false;
-                    }
-                    if (user.PrizeEntriesReported >= user.PrizesToReport && !forseReport)
-                    {
-                        SiAuto.Main.LogWarning("isReadyToReportPrices => [{0}] Prizes has been reported today.", user.UserName);
-                        return false;
-                    }
+                        if (user.PrizesToReport == 0)
+                        {
+                            SiAuto.Main.LogWarning("isReadyToReportPrices => [{0}] PrizesToReport == 0", user.UserName);
+                            return false;
+                        }
+                        //if (user.PrizeEntriesReported >= user.PrizesToReport && !forseReport)
+                        //{
+                        //    SiAuto.Main.LogWarning("isReadyToReportPrices => [{0}] Prizes has been reported today.", user.UserName);
+                        //    return false;
+                        //}
 
-                    if (ProceedMobileLogin(ref user) && ProceedWebSiteLogin(ref user))
-                        return true;
+                        if (ProceedMobileLogin(ref user) && ProceedWebSiteLogin(ref user))
+                            return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    SiAuto.Main.LogException(user.UserName ?? "", e);
                 }
             }
             return false;
@@ -228,6 +235,8 @@ namespace GasBuddy
         {
             try
             {
+                SiAuto.Main.EnterMethod("CommonAction => ReportPrizeEntries");
+
                 if (user != null && userContacInto != null)
                 {
                     string prizeReportURL = "https://m.gasbuddy.com/Prize.aspx";
@@ -236,10 +245,11 @@ namespace GasBuddy
                     {
                         int? prizes = GetAvailablePrizes(ref html);
                         if (prizes == null)
-                            throw new Exception(string.Format("Can't get available prizes to report. User {0}", user.UserName));
+                            throw new Exception(string.Format("Can't get available prizes to report. User [{0}]", user.UserName));
                         else if (prizes == 0)
                         {
-                            SiAuto.Main.LogMessage("No Available Prizes, User {0}. Stopped.", user.UserName);
+                            SiAuto.Main.LogColored(Level.Message, System.Drawing.Color.Yellow, "No Available Prizes, User [{0}]. Stopped.", user.UserName);
+                            return true;
                         }
                         else
                         {
@@ -278,6 +288,7 @@ namespace GasBuddy
                                 string.IsNullOrWhiteSpace(contactInfoUrl) ||
                                 prizesContactInfoResponse[string.Format(":contains('You have entered {0} ticket for this prize draw')", prizesToReport.ToString())].IsNullOrEmpty())
                             {
+                                SiAuto.Main.LogSeparator();
                                 SiAuto.Main.LogObjectValue(Level.Error, "Server Response", prizesContactInfoResponse.Render());
                                 throw new Exception();
                             }
@@ -307,7 +318,7 @@ namespace GasBuddy
                                 else
                                 {
 
-                                    SiAuto.Main.LogColored(System.Drawing.Color.Green, "Prizes Reported Succsessfully [{0}]", user.UserName);
+                                    SiAuto.Main.LogColored(System.Drawing.Color.Green, "Prizes Reported Succsessfully [{0}], Count [{1}]", user.UserName, user.PrizeEntriesReported);
                                     int? entriesReported = GetPrizeEntriesReported(ref finalResponse);
                                     if (entriesReported == null)
                                         throw new Exception("Failed to match prizes reported with prizes available.");
@@ -329,6 +340,10 @@ namespace GasBuddy
             catch (Exception e)
             {
                 SiAuto.Main.LogException(string.Format("User [{0}], ContactInfo [{}]", user.UserName, userContacInto.ID), e);
+            }
+            finally
+            {
+                SiAuto.Main.LeaveMethod("CommonAction => ReportPrizeEntries");
             }
 
             return false;

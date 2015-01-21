@@ -49,6 +49,8 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -76,6 +78,10 @@
     <ProjectReference Include="..\GasBuddy.Model\GasBuddy.Model.csproj">
       <Project>{e86c5870-92cc-4f9d-b8b9-4dcb60fa8488}</Project>
       <Name>GasBuddy.Model</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GasBuddy.Service\GasBuddy.Service.csproj">
+      <Project>{6d514be4-85ab-4ecc-be65-8e13fc9f5801}</Project>
+      <Name>GasBuddy.Service</Name>
     </ProjectReference>
     <ProjectReference Include="..\GasDuddy\GasBuddy.csproj">
       <Project>{41165e05-b147-44cb-b055-a739f73f91c9}</Project>
