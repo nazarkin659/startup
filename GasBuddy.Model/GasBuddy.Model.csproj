@@ -61,6 +61,7 @@
     <Compile Include="ContactInfo.cs" />
     <Compile Include="Mobile.cs" />
     <Compile Include="ProcessQueue.cs" />
+    <Compile Include="ProcessQueueArchive.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="User.cs" />
     <Compile Include="UsersContactInfo.cs" />

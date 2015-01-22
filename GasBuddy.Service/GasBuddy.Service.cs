@@ -39,19 +39,13 @@ namespace GasBuddy.Service
         protected override void OnStart(string[] args)
         {
             SiAuto.Main.LogMessage("Start service");
-            Thread.Sleep(new TimeSpan(0, 0, 15));
+            //Thread.Sleep(new TimeSpan(0, 0, 15));
             try
             {
-                //ProcessQueueF.RemoveAllQueue();
-                if (!InsertUsersInQueue())
-                    throw new Exception("InsertUsersInQueue failed");
-
-
-
                 // For first time, set amount of seconds between current time and schedule time
                 _timer.AutoReset = false;
                 _timer.Interval = Interval * 60 * 1000;
-                _timer.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Elapsed);
+                _timer.Elapsed += new System.Timers.ElapsedEventHandler(DoJob);
                 _timer.Enabled = true;
             }
             catch (Exception e)
@@ -135,7 +129,7 @@ namespace GasBuddy.Service
             return u;
         }
 
-        protected void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        protected void DoJob(object sender, System.Timers.ElapsedEventArgs e)
         {
             // 1. Process Schedule Task
             // ----------------------------------

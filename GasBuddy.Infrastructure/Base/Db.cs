@@ -24,6 +24,8 @@ namespace GasBuddy.Infrastructure.Base
         public virtual DbSet<ZipcodeStations> ZipcodeStations { get; set; }
 
         public virtual DbSet<ProcessQueue> ProcessQueue { get; set; }
+
+        public virtual DbSet<ProcessQueueArchive> ProcessQueueArchive { get; set; }
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
         }

@@ -33,8 +33,21 @@ namespace GasBuddy.Model
         public int? PrizeEntriesReported { get; set; }
 
         public int PrizesToReport { get; set; }
+        public int MaxPointsPerDay { get; set; }
 
         public virtual Mobile Mobile { get; set; }
         public virtual WebSite Website { get; set; }
+
+        public override string ToString()
+        {
+            if (this != null)
+            {
+                if (!string.IsNullOrWhiteSpace(this.UserName))
+                    return this.UserName;
+                else if (this.UserID != 0)
+                    return string.Format("ID [{0}]", this.UserID.ToString());
+            }
+            return "";
+        }
     }
 }

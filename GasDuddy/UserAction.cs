@@ -33,6 +33,8 @@ namespace GasBuddy
                     else
                     {
                         int zipcodeToReport = zipcodes.Random();
+                        SiAuto.Main.LogColored(System.Drawing.Color.Blue, "User = [{0}], zipcodeToReport = [{1}]", user.ToString(), zipcodeToReport);
+
                         List<ZipcodeStations> stations = GasBuddy.Infrastructure.Stations.GetStations(zipcodeToReport);
                         if (stations.IsNullOrEmpty())
                         {
@@ -45,7 +47,7 @@ namespace GasBuddy
                             {
                                 try
                                 {
-                                    if (!CommonAction.SuccessReportPriceMobile(station.StationsURL, user))
+                                    if (!CommonAction.SuccessReportPriceMobile(station.StationsURL, ref user))
                                     {
                                         maxFailCount--;
                                         SiAuto.Main.LogError("Failed to report prices. User [{0}] StationURL [{1}] RemainFailCount [{2}]", user.UserName, station.StationsURL, maxFailCount);
@@ -57,12 +59,18 @@ namespace GasBuddy
                                         else
                                             SiAuto.Main.LogError("Trying another station.");
 
-                                        Thread.Sleep(10000);
+                                        Thread.Sleep(10000); //wait 10 seconds.
                                     }
                                     else
                                     {
-                                        if (CommonAction.isReachedTodayMaxPoints(user))
+                                        if (user.TodayPointsReceived >= user.MaxPointsPerDay)
                                         {
+                                            if (stations.IndexOf(station) > 5)
+                                            {
+                                                SiAuto.Main.LogError("After reporting 4 stations TodayPointsReceived != MaxPointsPerDay. User [{0}], Station [{1}]", user.ToString(), station.StationsURL);
+                                                return false;
+                                            }
+
                                             ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(user.UserID);
                                             if (userContactInfo != null)
                                             {

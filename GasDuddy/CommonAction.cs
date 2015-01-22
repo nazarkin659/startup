@@ -20,7 +20,7 @@ namespace GasBuddy
         /// <param name="stationUrl"></param>
         /// <param name="user"></param>
         /// <returns></returns>
-        public static bool SuccessReportPriceMobile(string stationUrl, User user)
+        public static bool SuccessReportPriceMobile(string stationUrl, ref User user)
         {
             try
             {
@@ -59,7 +59,8 @@ namespace GasBuddy
 
                                 Spider spider = null;
                                 CQ response = SpiderUse.GetResponse(reportPriceUrl, ref spider, false, user.Mobile.Cookies, postData);
-                                if (!response.IsNullOrEmpty() && isReported(ref response, ref user))
+                                string responseURL = SpiderUse.GetResponseURL(ref spider);
+                                if (!response.IsNullOrEmpty() && isReported(responseURL, ref user))
                                 {
                                     return true;
                                 }
@@ -164,6 +165,30 @@ namespace GasBuddy
             return null;
         }
 
+        public static int? GetTodaysPoints(string url)
+        {
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                try
+                {
+                    Uri uri = new Uri(url);
+                    string pbParam = new QueryStringBuilder(uri).GetValue("pb");
+                    if (string.IsNullOrWhiteSpace(pbParam))
+                        throw new Exception(string.Format("pbPara is null or empty."));
+
+                    int todaysPoints;
+                    int.TryParse(pbParam, out todaysPoints);
+                    return todaysPoints;
+                }
+                catch (Exception e)
+                {
+                    SiAuto.Main.LogException(string.Format("Can't get today's points. URL [{0}]", url), e);
+                }
+            }
+
+            return null;
+        }
+
 
         public static bool isReachedTodayMaxPoints(User user)
         {
@@ -186,6 +211,8 @@ namespace GasBuddy
             {
                 try
                 {
+                    SiAuto.Main.EnterMethod("CommonAction => isReadyToReportPrices");
+
                     if (string.IsNullOrWhiteSpace(user.UserName))
                         throw new Exception("user.UserName == null");
                     else if (string.IsNullOrWhiteSpace(user.Password))
@@ -213,13 +240,19 @@ namespace GasBuddy
                         //    return false;
                         //}
 
-                        if (ProceedMobileLogin(ref user) && ProceedWebSiteLogin(ref user))
-                            return true;
+                        if (!ProceedMobileLogin(ref user) || !ProceedWebSiteLogin(ref user))
+                            throw new Exception("Failed to login.");
+
+                        return true;
                     }
                 }
                 catch (Exception e)
                 {
-                    SiAuto.Main.LogException(user.UserName ?? "", e);
+                    SiAuto.Main.LogException(user.ToString(), e);
+                }
+                finally
+                {
+                    SiAuto.Main.LeaveMethod("CommonAction => isReadyToReportPrices");
                 }
             }
             return false;
@@ -370,9 +403,8 @@ namespace GasBuddy
                     count++;
                 }
 
-                return true;
             }
-            return false;
+            return user.Mobile.isLoggedIn;
         }
         /// <summary>
         /// Should be used for any login attempt.
@@ -388,14 +420,13 @@ namespace GasBuddy
                 {
                     if (!Authorization.LoginWebsite(ref user))
                     {
-                        SiAuto.Main.LogError("CommonAction => ProceedWebSiteLogin: Failed to Login, attempt [{0}], Mobile.Response [{1}]", count, user.Website.Response);
+                        SiAuto.Main.LogError("CommonAction => ProceedWebSiteLogin: Failed to Login, attempt [{0}], Website.Response [{1}]", count, user.Website.Response);
                     }
                     count++;
                 }
 
-                return true;
             }
-            return false;
+            return user.Website.isLoggedIn;
         }
 
 
@@ -432,17 +463,21 @@ namespace GasBuddy
             }
             return null;
         }
-        private static bool isReported(ref CQ html, ref User user)
+        /// <summary>
+        /// Comparing TodayPointsReceived with value gotten from server.
+        /// </summary>
+        /// <param name="responseReportedURL">URL that you got after reporting prises.</param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        private static bool isReported(string responseReportedURL, ref User user)
         {
             //if (!html.IsNullOrEmpty()
             //    && html[string.Format("a>:contains('{0}')", user.UserName)].IsNullOrEmpty()
             //    )
-            int? todayPoints = GetTodaysPoints(ref user);
-            if (todayPoints != null && todayPoints > 0)
-            {
-                user.TodayPointsReceived = (int)todayPoints;
+            int? todayPoints = GetTodaysPoints(responseReportedURL);
+            user.TodayPointsReceived = todayPoints ?? 0;
+            if (todayPoints != null && todayPoints > user.TodayPointsReceived) //??!! redo
                 return true;
-            }
 
             return false;
         }

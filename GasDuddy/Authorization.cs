@@ -116,13 +116,12 @@ namespace GasBuddy
                         string responseLogedIn = SpiderUse.GetResponse(requestUrl, ref spider, true, userCookies, postData);
                         loginType.CheckLoginURL = spider.ResponseObject.ResponseUri.ToString();
                         loginType.Cookies = SpiderUse.Cookies;
+                        loginType.Response = responseLogedIn;
+
 
                         CQ responseCQ = responseLogedIn;
                         if (spider.ResponseObject != null && spider.ResponseObject.StatusCode == HttpStatusCode.OK && loginType.isLoggedIn)
-                        {
-                            loginType.Response = responseLogedIn;
                             return true;
-                        }
                     }
                 }
             }
