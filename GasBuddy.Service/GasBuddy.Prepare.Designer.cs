@@ -1,6 +1,6 @@
 ﻿namespace GasBuddy.Service
 {
-    partial class GasBuddyMain
+    partial class Service2
     {
         /// <summary> 
         /// Required designer variable.
@@ -28,12 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            // 
-            // GasBuddyMain
-            // 
-            this.CanPauseAndContinue = true;
-            this.ServiceName = "GasBuddy.Main";
-
+            components = new System.ComponentModel.Container();
+            this.ServiceName = "GasBuddy.Prepare";
         }
 
         #endregion

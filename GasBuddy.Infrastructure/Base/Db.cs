@@ -8,6 +8,7 @@ namespace GasBuddy.Infrastructure.Base
     using System.Data.Entity.Core.Objects;
     using System.Collections.Generic;
     using System.Data.Entity.Infrastructure;
+    using System.Data.Entity.Core.EntityClient;
 
     public partial class Db : DbContext
     {

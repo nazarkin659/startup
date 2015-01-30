@@ -23,7 +23,7 @@ namespace GasBuddy
             SiAuto.Main.WatchString("name", "value");
 
             //PrepareService();
-            User user = UsersFunc.GetUser("yrygama");
+            User user = UserFunc.GetUser("member9905");
             UserAction.isReported(ref user);
 
 
@@ -229,7 +229,7 @@ namespace GasBuddy
         /// <returns></returns>
         private static bool InsertUsersInQueue()
         {
-            List<User> users = UsersFunc.GetUsers(500);
+            List<User> users = UserFunc.GetUsers(500);
             if (users.IsNullOrEmpty())
                 throw new Exception("Service1 => InsertUsersInQueue: Can't get users.");
             else

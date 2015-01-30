@@ -165,7 +165,12 @@ namespace GasBuddy
             return null;
         }
 
-        public static int? GetTodaysPoints(string url)
+        /// <summary>
+        /// Get points that user has.
+        /// </summary>
+        /// <param name="url">Return URL from server after you send report prises request.</param>
+        /// <returns></returns>
+        public static int? GetTotalPoints(string url)
         {
             if (!string.IsNullOrWhiteSpace(url))
             {
@@ -174,7 +179,7 @@ namespace GasBuddy
                     Uri uri = new Uri(url);
                     string pbParam = new QueryStringBuilder(uri).GetValue("pb");
                     if (string.IsNullOrWhiteSpace(pbParam))
-                        throw new Exception(string.Format("pbPara is null or empty."));
+                        throw new Exception(string.Format("pbParam is null or empty."));
 
                     int todaysPoints;
                     int.TryParse(pbParam, out todaysPoints);
@@ -182,7 +187,34 @@ namespace GasBuddy
                 }
                 catch (Exception e)
                 {
-                    SiAuto.Main.LogException(string.Format("Can't get today's points. URL [{0}]", url), e);
+                    SiAuto.Main.LogException(string.Format("Can't get total user's points. URL [{0}]", url), e);
+                }
+            }
+
+            return null;
+        }
+
+        public static int? GetReportedPoints(string url)
+        {
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                try
+                {
+                    if (url.Contains("pb=") && !url.Contains("pa="))
+                        return 0; //scenario when you didn't get any points after reporting prises. 
+
+                    Uri uri = new Uri(url);
+                    string paParam = new QueryStringBuilder(uri).GetValue("pa");
+                    if (string.IsNullOrWhiteSpace(paParam))
+                        throw new Exception(string.Format("paParam is null or empty."));
+
+                    int reportedPoints;
+                    int.TryParse(paParam, out reportedPoints);
+                    return reportedPoints;
+                }
+                catch (Exception e)
+                {
+                    SiAuto.Main.LogException(string.Format("Can't get reported points. URL [{0}]", url), e);
                 }
             }
 
@@ -240,9 +272,11 @@ namespace GasBuddy
                         //    return false;
                         //}
 
-                        if (!ProceedMobileLogin(ref user) || !ProceedWebSiteLogin(ref user))
+                        Authorization authorization = new Authorization(user);
+                        if (!authorization.ProceedMobileLogin() || !authorization.ProceedWebSiteLogin())
                             throw new Exception("Failed to login.");
 
+                        user = authorization.User;
                         return true;
                     }
                 }
@@ -384,50 +418,7 @@ namespace GasBuddy
 
 
 
-        /// <summary>
-        /// Should be used for any login attempt.
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public static bool ProceedMobileLogin(ref User user)
-        {
-            if (user != null)
-            {
-                int count = 1;
-                while (!user.Mobile.isLoggedIn && count <= 3)
-                {
-                    if (!Authorization.LoginMobile(ref user))
-                    {
-                        SiAuto.Main.LogError("CommonAction => ProceedMobileLogin: Failed to Login, attempt [{0}], Mobile.Response [{1}]", count, user.Mobile.Response);
-                    }
-                    count++;
-                }
-
-            }
-            return user.Mobile.isLoggedIn;
-        }
-        /// <summary>
-        /// Should be used for any login attempt.
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
-        public static bool ProceedWebSiteLogin(ref User user)
-        {
-            if (user != null)
-            {
-                int count = 1;
-                while (!user.Website.isLoggedIn && count <= 3)
-                {
-                    if (!Authorization.LoginWebsite(ref user))
-                    {
-                        SiAuto.Main.LogError("CommonAction => ProceedWebSiteLogin: Failed to Login, attempt [{0}], Website.Response [{1}]", count, user.Website.Response);
-                    }
-                    count++;
-                }
-
-            }
-            return user.Website.isLoggedIn;
-        }
+       
 
 
         private static string BuildReportPriceUrl(string stationUrl)
@@ -474,10 +465,23 @@ namespace GasBuddy
             //if (!html.IsNullOrEmpty()
             //    && html[string.Format("a>:contains('{0}')", user.UserName)].IsNullOrEmpty()
             //    )
-            int? todayPoints = GetTodaysPoints(responseReportedURL);
-            user.TodayPointsReceived = todayPoints ?? 0;
-            if (todayPoints != null && todayPoints > user.TodayPointsReceived) //??!! redo
-                return true;
+            int? reportedPoints = GetReportedPoints(responseReportedURL);
+            int? totalPoints = GetTotalPoints(responseReportedURL);
+            if (reportedPoints != null)
+            {
+                if (reportedPoints == 0 && totalPoints != null)
+                {
+                    if (totalPoints == 0)
+                        throw new Exception("Total Point == 0, Reported Points == 0");
+
+                    user.TodayPointsReceived = (int)totalPoints;
+                    return true;
+                }
+
+                user.TodayPointsReceived += (int)reportedPoints;
+                if (reportedPoints > 0)
+                    return true;
+            }
 
             return false;
         }

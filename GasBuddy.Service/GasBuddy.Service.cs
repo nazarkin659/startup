@@ -15,18 +15,16 @@ using HelperFunctions;
 
 namespace GasBuddy.Service
 {
-    public partial class Service1 : ServiceBase
+    public partial class GasBuddyMain : ServiceBase
     {
         System.Timers.Timer _timer;
         DateTime _scheduleTime;
         private static Random random = new Random((int)DateTime.Now.Ticks);
         private int Interval;
 
-        public Service1()
+        public GasBuddyMain()
         {
-            SiAuto.Si.Connections = "tcp()";
-            SiAuto.Si.Enabled = true;
-            SiAuto.Si.DefaultLevel = Level.Debug;
+            
 
             Interval = int.Parse(System.Configuration.ConfigurationManager.AppSettings["IntervalBetweenProcessingInMinutes"]);
 
@@ -95,7 +93,7 @@ namespace GasBuddy.Service
 
         private bool InsertUsersInQueue()
         {
-            List<User> users = UsersFunc.GetUsers(500);
+            List<User> users = UserFunc.GetUsers(500);
             if (users.IsNullOrEmpty())
                 throw new Exception("Service1 => InsertUsersInQueue: Can't get users.");
             else
@@ -124,7 +122,7 @@ namespace GasBuddy.Service
             User u = null;
             queue = ProcessQueueF.GetNextQueue();
             if (queue != null)
-                u = UsersFunc.GetUserIDByProcessQueue(queue);
+                u = UserFunc.GetUserIDByProcessQueue(queue);
 
             return u;
         }
@@ -175,10 +173,12 @@ namespace GasBuddy.Service
                     {
                         //failed count ++
                         queue.FailCount++;
-                        queue.RetryCount--;
 
                         ProcessQueueF.UpdateRecordInQueue(queue);
                     }
+
+                    //TODO: call repository, update user.
+                    UserFunc.UpdateUser(userToProcess);
                 }
             }
             catch (Exception ex)

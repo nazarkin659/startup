@@ -77,6 +77,12 @@
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="GasBuddy.Prepare.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="GasBuddy.Prepare.Designer.cs">
+      <DependentUpon>GasBuddy.Prepare.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

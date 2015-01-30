@@ -15,11 +15,16 @@ namespace GasBuddy.Service
         /// </summary>
         static void Main()
         {
-            
+            SiAuto.Si.Connections = "tcp()";
+            SiAuto.Si.Enabled = true;
+            SiAuto.Si.DefaultLevel = Level.Debug;
+
+
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[] 
             { 
-                new Service1() 
+                new GasBuddyMain(),
+                new Service2()
             };
             ServiceBase.Run(ServicesToRun);
         }

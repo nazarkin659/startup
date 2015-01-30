@@ -29,31 +29,42 @@
         private void InitializeComponent()
         {
             this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
-            this.serviceInstaller1 = new System.ServiceProcess.ServiceInstaller();
+            this.Prepare = new System.ServiceProcess.ServiceInstaller();
+            this.Main = new System.ServiceProcess.ServiceInstaller();
             // 
             // serviceProcessInstaller1
             // 
             this.serviceProcessInstaller1.Account = System.ServiceProcess.ServiceAccount.LocalService;
             this.serviceProcessInstaller1.Password = null;
             this.serviceProcessInstaller1.Username = null;
-            this.serviceProcessInstaller1.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.serviceProcessInstaller1_AfterInstall);
             // 
-            // serviceInstaller1
+            // Prepare
             // 
-            this.serviceInstaller1.ServiceName = "GasBuddy";
-            this.serviceInstaller1.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.serviceInstaller1_AfterInstall);
+            this.Prepare.DisplayName = "GasBuddy.Prepare";
+            this.Prepare.ServiceName = "GasBuddy.Prepare";
+            this.Prepare.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+            this.Prepare.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.Prepare_AfterInstall);
+            // 
+            // Main
+            // 
+            this.Main.DisplayName = "GasBuddy.Main";
+            this.Main.ServiceName = "GasBuddy.Main";
+            this.Main.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+            this.Main.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.Main_AfterInstall);
             // 
             // ProjectInstaller
             // 
             this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.serviceProcessInstaller1,
-            this.serviceInstaller1});
+            this.Prepare,
+            this.Main});
 
         }
 
         #endregion
 
-        private System.ServiceProcess.ServiceInstaller serviceInstaller1;
-        public System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
+        private System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
+        private System.ServiceProcess.ServiceInstaller Prepare;
+        private System.ServiceProcess.ServiceInstaller Main;
     }
 }

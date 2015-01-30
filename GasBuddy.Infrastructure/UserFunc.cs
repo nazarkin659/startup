@@ -10,7 +10,7 @@ using GasBuddy.Infrastructure.Base;
 
 namespace GasBuddy.Infrastructure
 {
-    public class UsersFunc : Db
+    public class UserFunc 
     {
         private static Db dbConnection = null;
 
@@ -81,6 +81,7 @@ namespace GasBuddy.Infrastructure
                     newU.TodayPointsReceived = u.TodayPointsReceived;
                     newU.PrizeEntriesReported = u.PrizeEntriesReported;
                     newU.PrizesToReport = u.PrizesToReport;
+                    newU.MaxPointsPerDay = u.MaxPointsPerDay;
 
                     users.Add(newU);
                 }
@@ -130,7 +131,7 @@ namespace GasBuddy.Infrastructure
             User user = null;
             if (queue != null)
             {
-                user = UsersFunc.GetUser(queue.UserID);
+                user = UserFunc.GetUser(queue.UserID);
             }
             return user;
         }

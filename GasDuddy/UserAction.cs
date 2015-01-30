@@ -71,14 +71,13 @@ namespace GasBuddy
                                                 return false;
                                             }
 
-                                            ContactInfo userContactInfo = UsersFunc.GetUserContactInfo(user.UserID);
+                                            ContactInfo userContactInfo = UserFunc.GetUserContactInfo(user.UserID);
                                             if (userContactInfo != null)
                                             {
                                                 SiAuto.Main.LogMessage("[{0}] going to place prizes, wait 10sec before.", user.UserName);
                                                 Thread.Sleep(10000);
                                                 if (CommonAction.ReportPrizeEntries(ref user, ref userContactInfo))
                                                 {
-                                                    UsersFunc.UpdateUser(user);
                                                     return true;
                                                 }
                                             }
