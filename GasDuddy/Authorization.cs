@@ -15,7 +15,7 @@ using Gurock.SmartInspect;
 
 namespace GasBuddy
 {
-    internal class Authorization : BaseClass
+    public class Authorization : BaseClass
     {
         private User _user;
         public User User { get { return this._user; } }
@@ -35,7 +35,7 @@ namespace GasBuddy
             {
                 while (!_user.Mobile.isLoggedIn && count >= 0)
                 {
-                    if (LoginMobile())
+                    if (!LoginMobile())
                     {
                         SiAuto.Main.LogError("CommonAction => ProceedMobileLogin: Failed to Login, attempt [{0}], Mobile.Response [{1}]", count, _user.Mobile.Response);
                     }

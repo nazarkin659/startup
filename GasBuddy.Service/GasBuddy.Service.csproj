@@ -63,6 +63,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseService.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="GasBuddy.Service.cs">
       <SubType>Component</SubType>
     </Compile>

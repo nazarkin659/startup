@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using GasBuddy.Model;
 using GasBuddy.Infrastructure;
 using HelperFunctions;
+using Gurock.SmartInspect;
 
 namespace GasBuddy.UnitTesting
 {
@@ -10,6 +11,14 @@ namespace GasBuddy.UnitTesting
     public class UnitTest1
     {
         private Random random = new Random((int)DateTime.Now.Ticks);
+
+        [TestInitialize]
+        public void InitializeLogger()
+        {
+            SiAuto.Si.Connections = "tcp()";
+            SiAuto.Si.DefaultLevel = Level.Debug;
+            SiAuto.Si.Enabled = true;
+        }
 
         [TestMethod]
         public double GetNextRunTime()
@@ -42,9 +51,29 @@ namespace GasBuddy.UnitTesting
             GasBuddy.Model.User user;
             user = UserFunc.GetUser("nazarkin659");
 
+            Authorization auth = new Authorization(user);
+            auth.ProceedMobileLogin();
+            auth.ProceedWebSiteLogin();
+
             var condition = UserAction.isReported(ref user);
 
             Assert.IsTrue(condition);
+        }
+
+        [TestMethod]
+        public void LoginUsers()
+        {
+            GasBuddy.Model.User user;
+            user = UserFunc.GetUser("nazarkin659");
+
+            var authorization = new GasBuddy.Authorization(user);
+            authorization.ProceedMobileLogin();
+            authorization.ProceedWebSiteLogin();
+
+            var result = authorization.User;
+
+            Assert.IsTrue(result.Mobile.isLoggedIn);
+            Assert.IsTrue(result.Website.isLoggedIn);
         }
     }
 }

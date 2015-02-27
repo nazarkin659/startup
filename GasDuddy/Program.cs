@@ -26,7 +26,7 @@ namespace GasBuddy
             User user = UserFunc.GetUser("member9905");
             UserAction.isReported(ref user);
 
-
+            
             try
             {
 

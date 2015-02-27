@@ -353,7 +353,7 @@ namespace GasBuddy
                             string contactInfoUrl = SpiderUse.GetResponseURL(ref spider);
                             if (prizesContactInfoResponse.IsNullOrEmpty() ||
                                 string.IsNullOrWhiteSpace(contactInfoUrl) ||
-                                prizesContactInfoResponse[string.Format(":contains('You have entered {0} ticket for this prize draw')", prizesToReport.ToString())].IsNullOrEmpty())
+                                prizesContactInfoResponse[string.Format(":contains('You have entered {0}')", prizesToReport.ToString())].IsNullOrEmpty())
                             {
                                 SiAuto.Main.LogSeparator();
                                 SiAuto.Main.LogObjectValue(Level.Error, "Server Response", prizesContactInfoResponse.Render());
@@ -385,7 +385,7 @@ namespace GasBuddy
                                 else
                                 {
 
-                                    SiAuto.Main.LogColored(System.Drawing.Color.Green, "Prizes Reported Succsessfully [{0}], Count [{1}]", user.UserName, user.PrizeEntriesReported);
+                                    SiAuto.Main.LogColored(System.Drawing.Color.Green, "Prizes Reported Succsessfully [{0}]", user.UserName);
                                     int? entriesReported = GetPrizeEntriesReported(ref finalResponse);
                                     if (entriesReported == null)
                                         throw new Exception("Failed to match prizes reported with prizes available.");
@@ -395,6 +395,7 @@ namespace GasBuddy
                                         else
                                         {
                                             user.PrizeEntriesReported = entriesReported;
+                                            SiAuto.Main.LogColored(System.Drawing.Color.Green, "Count [{0}]", user.PrizeEntriesReported);
                                             return true;
                                         }
 
@@ -406,7 +407,7 @@ namespace GasBuddy
             }
             catch (Exception e)
             {
-                SiAuto.Main.LogException(string.Format("User [{0}], ContactInfo [{}]", user.UserName, userContacInto.ID), e);
+                SiAuto.Main.LogException(string.Format("User [{0}], ContactInfo [{1}]", user.UserName, userContacInto.ID), e);
             }
             finally
             {
@@ -418,7 +419,7 @@ namespace GasBuddy
 
 
 
-       
+
 
 
         private static string BuildReportPriceUrl(string stationUrl)

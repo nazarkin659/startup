@@ -15,7 +15,7 @@ using HelperFunctions;
 
 namespace GasBuddy.Service
 {
-    public partial class GasBuddyMain : ServiceBase
+    public partial class GasBuddyMain : BaseService
     {
         System.Timers.Timer _timer;
         DateTime _scheduleTime;
@@ -24,10 +24,7 @@ namespace GasBuddy.Service
 
         public GasBuddyMain()
         {
-            
-
             Interval = int.Parse(System.Configuration.ConfigurationManager.AppSettings["IntervalBetweenProcessingInMinutes"]);
-
             _timer = new System.Timers.Timer();
             //_scheduleTime = DateTime.Now.AddMinutes(3); // Schedule to run once a day at 7:00 a.m.
 
@@ -42,7 +39,7 @@ namespace GasBuddy.Service
             {
                 // For first time, set amount of seconds between current time and schedule time
                 _timer.AutoReset = false;
-                _timer.Interval = Interval * 60 * 1000;
+                _timer.Interval = Interval * 100;
                 _timer.Elapsed += new System.Timers.ElapsedEventHandler(DoJob);
                 _timer.Enabled = true;
             }
@@ -91,32 +88,7 @@ namespace GasBuddy.Service
         {
         }
 
-        private bool InsertUsersInQueue()
-        {
-            List<User> users = UserFunc.GetUsers(500);
-            if (users.IsNullOrEmpty())
-                throw new Exception("Service1 => InsertUsersInQueue: Can't get users.");
-            else
-            {
-                List<ProcessQueue> queues = new List<ProcessQueue>();
-                foreach (var user in users.Where(u => u.PrizesToReport != 0))
-                {
-                    ProcessQueue queue = new ProcessQueue();
-                    queue.UserID = user.UserID;
-                    queue.Successful = false;
-                    queue.RetryCount = 3;
-                    queue.Priority = 0;
-                    queue.FailCount = 0;
-                    queue.Processing = false;
-
-                    queues.Add(queue);
-                }
-
-                ProcessQueueF.AddRecord(queues);
-                return true;
-            }
-        }
-
+       
         private User GetUnproceedUser(out ProcessQueue queue)
         {
             User u = null;
@@ -129,21 +101,29 @@ namespace GasBuddy.Service
 
         protected void DoJob(object sender, System.Timers.ElapsedEventArgs e)
         {
-            // 1. Process Schedule Task
-            // ----------------------------------
+            #region update timer
+            if (_timer.Interval != Interval * 60 * 1000)
+            {
+                _timer.Interval = Interval * 60 * 1000;
+            }
+            #endregion update timer
+            InitializeLogger();
+
             ProcessQueue queue = null;
             User userToProcess = null;
             try
             {
-                SiAuto.Main.EnterMethod("Service1 => Timer_Elapsed");
+                SiAuto.Main.EnterMethod("GasBuddyMain => DoJob");
 
                 userToProcess = GetUnproceedUser(out queue);
 
 
                 if (userToProcess == null)
                 {
-                    SiAuto.Main.LogMessage("Service1 => Timer_Elapsed: No user to process [{0}]", DateTime.Now.ToShortTimeString());
-                    //stop service till next day.
+                    SiAuto.Main.LogMessage("GasBuddyMain => DoJob: No user to process [{0}]", DateTime.Now.ToShortTimeString());
+
+                    #region till next day
+
                     double? nextRunTime = GetNextRunTime(DateTime.Now, 8);
                     if (nextRunTime == null)
                     {
@@ -153,6 +133,8 @@ namespace GasBuddy.Service
 
                     SiAuto.Main.LogColored(System.Drawing.Color.Blue, "Next Run [{0}] - [{1}]", DateTime.Now.AddDays(1).ToShortDateString(), new TimeSpan(0, 0, (int)(DateTime.Now.TimeOfDay.TotalSeconds + nextRunTime)));
                     _timer.Interval = (double)nextRunTime * 1000; //set internal in seconds.
+
+                    #endregion till next day
                 }
                 else
                 {
@@ -179,27 +161,18 @@ namespace GasBuddy.Service
 
                     //TODO: call repository, update user.
                     UserFunc.UpdateUser(userToProcess);
+
                 }
             }
             catch (Exception ex)
             {
-                SiAuto.Main.LogException(string.Format("Service1 => Timer_Elapsed: Queue [{0}] User [{1}]", queue.ID, userToProcess.UserName ?? ""), ex);
+                SiAuto.Main.LogException(string.Format("GasBuddyMain => DoJob: Queue [{0}] User [{1}]", queue.ID, userToProcess.UserName ?? ""), ex);
             }
             finally
             {
-                if (_timer.Interval != Interval * 60 * 1000)
-                {
-                    _timer.Interval = Interval * 60 * 1000;
-                }
                 _timer.AutoReset = true;
-                SiAuto.Main.LeaveMethod("Service1 => Timer_Elapsed");
+                SiAuto.Main.LeaveMethod("GasBuddyMain => DoJob");
             }
-
-            // 2. If tick for the first time, reset next run to every 24 hours
-            //if (_timer.Interval != 60 * 10 * 1000)
-            //{
-            //    _timer.Interval = 60 * 10 * 1000;
-            //}
         }
     }
 }

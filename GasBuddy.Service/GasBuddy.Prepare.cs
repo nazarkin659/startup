@@ -14,10 +14,11 @@ using HelperFunctions;
 
 namespace GasBuddy.Service
 {
-    partial class Service2 : ServiceBase
+    partial class Service2 : BaseService
     {
         public Service2()
         {
+            InitializeLogger();
             InitializeComponent();
         }
 
@@ -25,23 +26,31 @@ namespace GasBuddy.Service
         {
             try
             {
+                SiAuto.Main.EnterMethod("GasBuddy.Prepare => OnStart");
+
+
                 SiAuto.Main.LogMessage("GasBuddy.Prepare Service has been started.");
                 if (PrepareService())
                     this.Stop();
                 else
                     throw new Exception("Could not stop the service,");
-                // TODO: Add code here to start your service.
             }
             catch (Exception e)
             {
-                SiAuto.Main.LogException(e);
+                SiAuto.Main.LogException("GasBuddy.Prepare => OnStart", e);
                 this.Stop();
             }
+            finally
+            {
+                SiAuto.Main.LeaveMethod("GasBuddy.Prepare => OnStart");
+            }
         }
-        public static bool PrepareService()
+        public bool PrepareService()
         {
             try
             {
+                SiAuto.Main.EnterMethod("GasBuddy.Prepare => PrepareService");
+
                 PrepareUsers();
 
                 if (!ProcessQueueF.ArchiveData())
@@ -53,39 +62,13 @@ namespace GasBuddy.Service
             }
             catch (Exception e)
             {
-                SiAuto.Main.LogException(e);
+                SiAuto.Main.LogException("GasBuddy.Prepare => PrepareService", e);
+            }
+            finally
+            {
+                SiAuto.Main.LeaveMethod("GasBuddy.Prepare => PrepareService");
             }
             return false;
-        }
-            /// <summary>
-        /// Replicating Users to ProcessQueue table.
-        /// Applies only for users where PrizesToReport is not 0.
-        /// </summary>
-        /// <returns></returns>
-        private static bool InsertUsersInQueue()
-        {
-            List<User> users = UserFunc.GetUsers(500);
-            if (users.IsNullOrEmpty())
-                throw new Exception("Service1 => InsertUsersInQueue: Can't get users.");
-            else
-            {
-                List<ProcessQueue> queues = new List<ProcessQueue>();
-                foreach (var user in users.Where(u => u.PrizesToReport != 0))
-                {
-                    ProcessQueue queue = new ProcessQueue();
-                    queue.UserID = user.UserID;
-                    queue.Successful = false;
-                    queue.RetryCount = 3;
-                    queue.Priority = 0;
-                    queue.FailCount = 0;
-                    queue.Processing = false;
-
-                    queues.Add(queue);
-                }
-
-                ProcessQueueF.AddRecord(queues);
-                return true;
-            }
         }
 
         /// <summary>
@@ -101,13 +84,6 @@ namespace GasBuddy.Service
                 else
                     dbConnection.Database.ExecuteSqlCommand("exec [PrepareUsers] @UserName={0}", userName);
             }
-        }
-        
-
-
-        protected override void OnStop()
-        {
-            // TODO: Add code here to perform any tear-down necessary to stop your service.
         }
     }
 }
